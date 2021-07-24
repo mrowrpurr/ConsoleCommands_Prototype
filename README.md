@@ -1,2 +1,1 @@
-# CustomConsoleCommands
-CCC - Custom Console Commands (Skyrim Mod)
+![Custom Console Commands](Images/Logo.png)
