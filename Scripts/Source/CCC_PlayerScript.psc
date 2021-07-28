@@ -30,18 +30,28 @@ Event OnKeyDown(int keyCode)
     if keyCode != ENTER_KEYCODE && keyCode != RETURN_KEYCODE
         return
     endIf
-
+    
     int commandLenth = UI.GetInt(MENU_NAME, "_global.Console.ConsoleInstance.Commands.length")
-    Debug.Trace("Total number of commands run: " + commandLenth)
-
     string mostRecentCommand = UI.GetString(MENU_NAME, "_global.Console.ConsoleInstance.Commands." + (commandLenth - 1))
-    Debug.Trace("Most recent command: " + mostRecentCommand)
-
-    string fullCommandHistory = UI.GetString(MENU_NAME, "_global.Console.ConsoleInstance.CommandHistory.text")
-    Debug.Trace("FULL HISTORY: " + fullCommandHistory)
-
-    ; UI.SetString(MENU_NAME, "_global.Console.ConsoleInstance.CommandHistory.text", "")
-    ; UI.Invoke(MENU_NAME, "_global.Console.ClearHistory")
-    UI.Invoke(MENU_NAME, "_global.Console.ClearHistory")
-    UI.InvokeInt(MENU_NAME, "_global.Console.SetTextSize", 10)
+    
+    string commandPrefix = "gold "
+    if StringUtil.Find(mostRecentCommand, commandPrefix) == 0
+        string argumentText = StringUtil.Substring(mostRecentCommand, StringUtil.GetLength(commandPrefix))
+        string[] arguments = StringUtil.Split(argumentText, " ")
+        GimmeGold(arguments)
+        UI.Invoke(MENU_NAME, "_global.Console.ClearHistory")
+    endIf
 EndEvent
+
+Function GimmeGold(string[] arguments)
+    Actor player = Game.GetPlayer()
+    Form gold = Game.GetForm(0x0000000f)
+    int index = 0
+    while index < arguments.Length
+        int amount = arguments[index] as int
+        if amount
+            player.AddItem(gold, amount)
+        endIf
+        index += 1
+    endWhile
+EndFunction
