@@ -1,3 +1,5 @@
+[View on NexusMods](https://www.nexusmods.com/skyrimspecialedition/mods/52964)
+
 ![Custom Console Commands](Images/Logo.png)
 
 ---
