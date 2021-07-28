@@ -6,6 +6,25 @@
 
 ---
 
+Utility mod for mod authors.
+
+Makes it easy to create your own custom commands for the ~ Skyrim console.
+
+# Installation
+
+Download manually or using your favorite mod manager.
+
+In your scripts, import `Scripts/Source/
+
+---
+
+**Note:** you cannot run these console commands fro the Main Menu. These commands can only be run from in-game._
+
+
+
+
+
+
 ## Main API:
 
 ```psc
