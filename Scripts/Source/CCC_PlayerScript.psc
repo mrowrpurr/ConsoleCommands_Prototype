@@ -1,6 +1,9 @@
 Scriptname CCC_PlayerScript extends ReferenceAlias  
 
 string MENU_NAME = "Console"
+string COMMAND_HISTORY_TARGET = "_global.Console.ConsoleInstance.CommandHistory.text"
+string COMMANDS_LENGTH_TARGET = "_global.Console.ConsoleInstance.Commands.length"
+
 int ENTER_KEYCODE = 28
 int RETURN_KEYCODE = 156
 
@@ -21,7 +24,7 @@ Event OnMenuOpen(string menuName)
 EndEvent
 
 Event OnMenuClose(string menuName)
-    Debug.Trace("Menu open: " + menuName)
+    Debug.Trace("Menu close: " + menuName)
     UnregisterForKey(ENTER_KEYCODE)
     UnregisterForKey(RETURN_KEYCODE)
 EndEvent
@@ -31,27 +34,28 @@ Event OnKeyDown(int keyCode)
         return
     endIf
     
-    int commandLenth = UI.GetInt(MENU_NAME, "_global.Console.ConsoleInstance.Commands.length")
+    int commandLenth = UI.GetInt(MENU_NAME, COMMANDS_LENGTH_TARGET)
     string mostRecentCommand = UI.GetString(MENU_NAME, "_global.Console.ConsoleInstance.Commands." + (commandLenth - 1))
-    
-    string commandPrefix = "gold "
-    if StringUtil.Find(mostRecentCommand, commandPrefix) == 0
-        string argumentText = StringUtil.Substring(mostRecentCommand, StringUtil.GetLength(commandPrefix))
-        string[] arguments = StringUtil.Split(argumentText, " ")
-        GimmeGold(arguments)
-        UI.Invoke(MENU_NAME, "_global.Console.ClearHistory")
+    string[] commandParts = StringUtil.Split(mostRecentCommand, " ")
+    string commandName = commandParts[0]
+    string commandArguments = ""
+    if commandParts.Length > 1
+        commandArguments = StringUtil.Substring(mostRecentCommand, StringUtil.GetLength(commandName) + 1)
+    endIf
+
+    Debug.Trace("Command: " + commandName)
+
+    if StorageUtil.StringListHas(None, "CCC_RegisteredCommands", commandName)
+        Debug.Trace("Send Mod Event: OnConsole" + commandName)
+        RemoveCommandNotFoundEntryFromHistory(commandName)
+        SendModEvent("OnConsole" + commandName, commandArguments)
     endIf
 EndEvent
 
-Function GimmeGold(string[] arguments)
-    Actor player = Game.GetPlayer()
-    Form gold = Game.GetForm(0x0000000f)
-    int index = 0
-    while index < arguments.Length
-        int amount = arguments[index] as int
-        if amount
-            player.AddItem(gold, amount)
-        endIf
-        index += 1
-    endWhile
+Function RemoveCommandNotFoundEntryFromHistory(string commandName)
+    string historyText = UI.GetString(MENU_NAME, COMMAND_HISTORY_TARGET)
+    string errorString = "Script command \"" + commandName + "\" not found"
+    int errorIndex = StringUtil.Find(historyText, errorString)
+    string historyBeforeError = StringUtil.Substring(historyText, 0, errorIndex)
+    UI.SetString(MENU_NAME, COMMAND_HISTORY_TARGET, historyBeforeError)
 EndFunction

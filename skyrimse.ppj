@@ -18,6 +18,7 @@
         <Variable Name="ImportsFolder" Value="C:\[YOUR INCLUDES FOLDER]" />
     </Variables>
     <Imports>
+        <Import>C:\Skyrim\Mods\PapyrusUtil\Scripts\Source</Import>
         <Import>C:\Skyrim\Mods\SKSE64\Scripts\Source</Import>
         <Import>C:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source</Import>
     </Imports>
