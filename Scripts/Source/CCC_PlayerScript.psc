@@ -38,17 +38,13 @@ Event OnKeyDown(int keyCode)
     string mostRecentCommand = UI.GetString(MENU_NAME, "_global.Console.ConsoleInstance.Commands." + (commandLenth - 1))
     string[] commandParts = StringUtil.Split(mostRecentCommand, " ")
     string commandName = commandParts[0]
-    string commandArguments = ""
-    if commandParts.Length > 1
-        commandArguments = StringUtil.Substring(mostRecentCommand, StringUtil.GetLength(commandName) + 1)
-    endIf
 
     Debug.Trace("Command: " + commandName)
 
     if StorageUtil.StringListHas(None, "CCC_RegisteredCommands", commandName)
         Debug.Trace("Send Mod Event: OnConsole" + commandName)
         RemoveCommandNotFoundEntryFromHistory(commandName)
-        SendModEvent("OnConsole" + commandName, commandArguments)
+        SendModEvent("OnConsole" + commandName, mostRecentCommand)
     endIf
 EndEvent
 
