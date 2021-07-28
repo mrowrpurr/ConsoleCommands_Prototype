@@ -3,6 +3,7 @@ Scriptname CCC_PlayerScript extends ReferenceAlias hidden
 string MENU_NAME = "Console"
 string COMMAND_HISTORY_TARGET = "_global.Console.ConsoleInstance.CommandHistory.text"
 string COMMANDS_LENGTH_TARGET = "_global.Console.ConsoleInstance.Commands.length"
+string COMMAND_REGISTRY_KEY = "CustomConsoleCommands_RegisteredCommands"
 
 int ENTER_KEYCODE = 28
 int RETURN_KEYCODE = 156
@@ -11,20 +12,22 @@ Event OnInit()
     StartListeningToConsole()
 EndEvent
 
+Event OnPlayerLoadGame()
+    StartListeningToConsole()
+EndEvent
+
 Function StartListeningToConsole()
     UnregisterForAllMenus()
     RegisterForMenu(MENU_NAME)
-    Debug.Trace("Registered to listen for console open...")
+    CCC_UtilityScript.Log("Listening for console commands...")
 EndFunction
 
 Event OnMenuOpen(string menuName)
-    Debug.Trace("Menu open: " + menuName)
     RegisterForKey(ENTER_KEYCODE)
     RegisterForKey(RETURN_KEYCODE)
 EndEvent
 
 Event OnMenuClose(string menuName)
-    Debug.Trace("Menu close: " + menuName)
     UnregisterForKey(ENTER_KEYCODE)
     UnregisterForKey(RETURN_KEYCODE)
 EndEvent
@@ -39,10 +42,8 @@ Event OnKeyDown(int keyCode)
     string[] commandParts = StringUtil.Split(mostRecentCommand, " ")
     string commandName = commandParts[0]
 
-    Debug.Trace("Command: " + commandName)
-
-    if StorageUtil.StringListHas(None, "CCC_RegisteredCommands", commandName)
-        Debug.Trace("Send Mod Event: OnConsole" + commandName)
+    if StorageUtil.StringListHas(None, COMMAND_REGISTRY_KEY, commandName)
+        CCC_UtilityScript.Log("Run OnConsole" + commandName + " for command: " + mostRecentCommand)
         RemoveCommandNotFoundEntryFromHistory(commandName)
         SendModEvent("OnConsole" + commandName, mostRecentCommand)
     endIf
