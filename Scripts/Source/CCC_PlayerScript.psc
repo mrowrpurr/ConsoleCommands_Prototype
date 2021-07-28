@@ -1,4 +1,4 @@
-Scriptname CCC_PlayerScript extends ReferenceAlias  
+Scriptname CCC_PlayerScript extends ReferenceAlias hidden
 
 string MENU_NAME = "Console"
 string COMMAND_HISTORY_TARGET = "_global.Console.ConsoleInstance.CommandHistory.text"
