@@ -27,6 +27,8 @@ event OnKeyDown(int keyCode)
             UI.SetBool("Console", "_global.Console.ConsoleInstance.CustomCommandsEnabled", true)
             Debug.Notification("Enabled custom commands")
         endIf
+    elseIf keyCode == 45 ; x
+        UI.InvokeString("Console", "_global.Console.ConsoleInstance.ExecuteCommand", "player.additem f 1000")
     endIf
 endEvent
 
