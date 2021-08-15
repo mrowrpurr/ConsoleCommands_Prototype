@@ -208,29 +208,15 @@ class Console extends MovieClip
       }
       if(Key.getCode() == 13 || Key.getCode() == 108)
       {
-         if(this.CommandEntry.text.length != 0)
-         {
-            if(this.Commands.length >= Console.PREVIOUS_COMMANDS)
-            {
-               this.Commands.shift();
-            }
-            this.Commands.push(this.CommandEntry.text);
-            Console.AddHistory(this.CommandEntry.text + "\n");
-            gfx.io.GameDelegate.call("ExecuteCommand",[this.CommandEntry.text]);
-            this.ResetCommandEntry();
-         }
+         this.RunCommandEntryText();
       }
       else if(Key.getCode() == 33)
       {
-         var _loc3_ = this.CommandHistory.bottomScroll - this.CommandHistory.scroll;
-         var _loc2_ = this.CommandHistory.scroll - _loc3_;
-         this.CommandHistory.scroll = _loc2_ <= 0 ? 0 : _loc2_;
+         this.ScrollUp();
       }
       else if(Key.getCode() == 34)
       {
-         _loc3_ = this.CommandHistory.bottomScroll - this.CommandHistory.scroll;
-         _loc2_ = this.CommandHistory.scroll + _loc3_;
-         this.CommandHistory.scroll = _loc2_ > this.CommandHistory.maxscroll ? this.CommandHistory.maxscroll : _loc2_;
+         this.ScrollDown();
       }
    }
    function onResize()
@@ -238,5 +224,35 @@ class Console extends MovieClip
       this.Background._width = Stage.width;
       this.CommandEntry._width = this.CommandHistory._width = this.CurrentSelection._width = Stage.width - this.TextXOffset * 2;
       Console.SetSize(this.ScreenPercent);
+   }
+   function ExecuteCommand(commandText)
+   {
+      gfx.io.GameDelegate.call("ExecuteCommand",[commandText]);
+   }
+   function ScrollUp()
+   {
+      var _loc2_ = this.CommandHistory.bottomScroll - this.CommandHistory.scroll;
+      var _loc3_ = this.CommandHistory.scroll - _loc2_;
+      this.CommandHistory.scroll = _loc3_ <= 0 ? 0 : _loc3_;
+   }
+   function ScrollDown()
+   {
+      _loc1_ = this.CommandHistory.bottomScroll - this.CommandHistory.scroll;
+      _loc2_ = this.CommandHistory.scroll + _loc1_;
+      this.CommandHistory.scroll = _loc2_ > this.CommandHistory.maxscroll ? this.CommandHistory.maxscroll : _loc2_;
+   }
+   function RunCommandEntryText()
+   {
+      if(this.CommandEntry.text.length != 0)
+      {
+         if(this.Commands.length >= Console.PREVIOUS_COMMANDS)
+         {
+            this.Commands.shift();
+         }
+         this.Commands.push(this.CommandEntry.text);
+         Console.AddHistory(this.CommandEntry.text + "\n");
+         this.ExecuteCommand(this.CommandEntry.text);
+         this.ResetCommandEntry();
+      }
    }
 }

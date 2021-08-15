@@ -5,7 +5,7 @@ Push "Console"
 GetMember
 Not
 Not
-If loc1893
+If loc16d5
 Push "_global"
 GetVariable
 Push "Console"
@@ -1065,7 +1065,7 @@ SetMember
 }
 SetMember
 Push register2 "onKeyDown"
-DefineFunction2 "" 0 4 false false true false true false false true false  {
+DefineFunction2 "" 0 2 false false true false true false false true false  {
 Push "Console"
 GetVariable
 Push "ConsoleInstance"
@@ -1076,172 +1076,52 @@ Not
 If loc12e1
 Push undefined
 Return
-loc12e1:Push 0.0 "Key"
+loc12e1:Push 0 "Key"
 GetVariable
 Push "getCode"
 CallMethod
 Push 13
 Equals2
 PushDuplicate
-If loc1324
+If loc131c
 Pop
-Push 0.0 "Key"
+Push 0 "Key"
 GetVariable
 Push "getCode"
 CallMethod
 Push 108
 Equals2
-loc1324:Not
-If loc1422
-Push register1 "CommandEntry"
-GetMember
-Push "text"
-GetMember
-Push "length"
-GetMember
-Push 0.0
-Equals2
-Not
-Not
-If loc141d
-Push register1 "Commands"
-GetMember
-Push "length"
-GetMember
-Push "Console"
-GetVariable
-Push "PREVIOUS_COMMANDS"
-GetMember
-Less2
-Not
-Not
-If loc138c
-Push 0.0 register1 "Commands"
-GetMember
-Push "shift"
+loc131c:Not
+If loc1335
+Push 0 register1 "RunCommandEntryText"
 CallMethod
 Pop
-loc138c:Push register1 "CommandEntry"
-GetMember
-Push "text"
-GetMember
-Push 1 register1 "Commands"
-GetMember
-Push "push"
-CallMethod
-Pop
-Push register1 "CommandEntry"
-GetMember
-Push "text"
-GetMember
-Push "\n"
-Add2
-Push 1 "Console"
-GetVariable
-Push "AddHistory"
-CallMethod
-Pop
-Push register1 "CommandEntry"
-GetMember
-Push "text"
-GetMember
-Push 1
-InitArray
-Push "ExecuteCommand" 2 "gfx"
-GetVariable
-Push "io"
-GetMember
-Push "GameDelegate"
-GetMember
-Push "call"
-CallMethod
-Pop
-Push 0.0 register1 "ResetCommandEntry"
-CallMethod
-Pop
-loc141d:Jump loc1554
-loc1422:Push 0.0 "Key"
+Jump loc1396
+loc1335:Push 0 "Key"
 GetVariable
 Push "getCode"
 CallMethod
 Push 33
 Equals2
 Not
-If loc14bb
-Push register1 "CommandHistory"
-GetMember
-Push "bottomScroll"
-GetMember
-Push register1 "CommandHistory"
-GetMember
-Push "scroll"
-GetMember
-Subtract
-StoreRegister 3
+If loc1368
+Push 0 register1 "ScrollUp"
+CallMethod
 Pop
-Push register1 "CommandHistory"
-GetMember
-Push "scroll"
-GetMember
-Push register3
-Subtract
-StoreRegister 2
-Pop
-Push register1 "CommandHistory"
-GetMember
-Push "scroll" register2 0.0
-Greater
-If loc14b0
-Push 0.0
-Jump loc14b5
-loc14b0:Push register2
-loc14b5:SetMember
-Jump loc1554
-loc14bb:Push 0.0 "Key"
+Jump loc1396
+loc1368:Push 0 "Key"
 GetVariable
 Push "getCode"
 CallMethod
 Push 34
 Equals2
 Not
-If loc1554
-Push register1 "CommandHistory"
-GetMember
-Push "bottomScroll"
-GetMember
-Push register1 "CommandHistory"
-GetMember
-Push "scroll"
-GetMember
-Subtract
-StoreRegister 3
+If loc1396
+Push 0 register1 "ScrollDown"
+CallMethod
 Pop
-Push register1 "CommandHistory"
-GetMember
-Push "scroll"
-GetMember
-Push register3
-Add2
-StoreRegister 2
-Pop
-Push register1 "CommandHistory"
-GetMember
-Push "scroll" register2 register1 "CommandHistory"
-GetMember
-Push "maxscroll"
-GetMember
-Greater
-Not
-If loc154e
-Push register1 "CommandHistory"
-GetMember
-Push "maxscroll"
-GetMember
-Jump loc1553
-loc154e:Push register2
-loc1553:SetMember
 }
-loc1554:SetMember
+loc1396:SetMember
 Push register2 "onResize"
 DefineFunction2 "" 0 2 false false true false true false false true false  {
 Push register1 "Background"
@@ -1324,11 +1204,11 @@ Push "scroll" register3 0
 Greater
 Not
 Not
-If loc16ab
+If loc14ed
 Push 0
-Jump loc16b0
-loc16ab:Push register3
-loc16b0:SetMember
+Jump loc14f2
+loc14ed:Push register3
+loc14f2:SetMember
 }
 SetMember
 Push register2 "ScrollDown"
@@ -1361,15 +1241,15 @@ Push "maxscroll"
 GetMember
 Greater
 Not
-If loc174c
+If loc158e
 Push register1 "CommandHistory"
 GetMember
 Push "maxscroll"
 GetMember
-Jump loc1758
-loc174c:Push "_loc2_"
+Jump loc159a
+loc158e:Push "_loc2_"
 GetVariable
-loc1758:SetMember
+loc159a:SetMember
 }
 SetMember
 Push register2 "RunCommandEntryText"
@@ -1384,7 +1264,7 @@ Push 0
 Equals2
 Not
 Not
-If loc1838
+If loc167a
 Push register1 "Commands"
 GetMember
 Push "length"
@@ -1396,13 +1276,13 @@ GetMember
 Less2
 Not
 Not
-If loc17c6
+If loc1608
 Push 0 register1 "Commands"
 GetMember
 Push "shift"
 CallMethod
 Pop
-loc17c6:Push register1 "CommandEntry"
+loc1608:Push register1 "CommandEntry"
 GetMember
 Push "text"
 GetMember
@@ -1433,7 +1313,7 @@ Push 0 register1 "ResetCommandEntry"
 CallMethod
 Pop
 }
-loc1838:SetMember
+loc167a:SetMember
 Push register1 "PREVIOUS_COMMANDS" 32
 SetMember
 Push register1 "HistoryCharBufferSize" 8192
@@ -1451,4 +1331,4 @@ Push "prototype"
 GetMember
 Push 3 "ASSetPropFlags"
 CallFunction
-loc1893:Pop
+loc16d5:Pop
