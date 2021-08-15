@@ -1,3 +1,6 @@
-*.zip
 *.bsa
+*.zip
+*.7z
+*.rar
+*.pas
 SSEEdit*
