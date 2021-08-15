@@ -5,19 +5,23 @@ int[] AllKeyCodes
 Event OnInit()
     SetupAllKeyCodesArray()
     RegisterForMenu("Console")
+    ListenForAnyKey()
+    Debug.Notification("Mapped key for console is: " + Input.GetMappedKey("Console"))
 EndEvent
 
 Event OnMenuOpen(string menuName)
     Debug.Notification("OPEN: " + menuName)
-    ListenForAnyKey()
 EndEvent
 
 Event OnMenuClose(string menuName)
     Debug.Notification("CLOSE: " + menuName)
-    UnregisterForAllKeys()
+    ; UnregisterForAllKeys()
 EndEvent
 
+bool minimized = true
+
 event OnKeyDown(int keyCode)
+    Debug.Notification("Key Pressed: " + keyCode)
     if keyCode == 32 ; D
         bool customCommandsEnabled = UI.GetBool("Console", "_global.Console.ConsoleInstance.CustomCommandsEnabled")
         if customCommandsEnabled
@@ -28,13 +32,25 @@ event OnKeyDown(int keyCode)
             Debug.Notification("Enabled custom commands")
         endIf
     elseIf keyCode == 45 ; x
-        ; UI.InvokeString("Console", "_global.Console.ConsoleInstance.ExecuteCommand", "player.additem f 1000")
-        string enteredText = UI.GetString("Console", "_global.Console.ConsoleInstance.CommandEntry.text")
-        UI.Invoke("Console", "_global.Console.ConsoleInstance.ResetCommandEntry")
-        ; UI.Invoke("Console", "_global.Console.ClearHistory")
-        UI.InvokeString("Console", "_global.Console.AddHistory", "Ha. You wanted to run '" + enteredText + "', right?\n")
-        ; UI.SetString("Console", "_global.Console.ConsoleInstance.CommandHistory.text", "Ha. You wanted to run '" + enteredText + "', right?")
-        UI.SetString("Console", "_global.Console.ConsoleInstance.CurrentSelection.text", "Command: " + enteredText)
+        if minimized
+            Debug.Notification("Show console")
+            ; UI.Invoke("Console", "_global.Console.Show")
+            Input.TapKey(41) ; ~
+            minimized = false
+        else
+            Debug.Notification("Hide console")
+            UI.Invoke("Console", "_global.Console.Hide")
+            minimized = true
+        endIf
+
+
+        ; ; UI.InvokeString("Console", "_global.Console.ConsoleInstance.ExecuteCommand", "player.additem f 1000")
+        ; string enteredText = UI.GetString("Console", "_global.Console.ConsoleInstance.CommandEntry.text")
+        ; UI.Invoke("Console", "_global.Console.ConsoleInstance.ResetCommandEntry")
+        ; ; UI.Invoke("Console", "_global.Console.ClearHistory")
+        ; UI.InvokeString("Console", "_global.Console.AddHistory", "Ha. You wanted to run '" + enteredText + "', right?\n")
+        ; ; UI.SetString("Console", "_global.Console.ConsoleInstance.CommandHistory.text", "Ha. You wanted to run '" + enteredText + "', right?")
+        ; UI.SetString("Console", "_global.Console.ConsoleInstance.CurrentSelection.text", "Command: " + enteredText)
     endIf
 endEvent
 
