@@ -31,8 +31,10 @@ event OnKeyDown(int keyCode)
         ; UI.InvokeString("Console", "_global.Console.ConsoleInstance.ExecuteCommand", "player.additem f 1000")
         string enteredText = UI.GetString("Console", "_global.Console.ConsoleInstance.CommandEntry.text")
         UI.Invoke("Console", "_global.Console.ConsoleInstance.ResetCommandEntry")
-        UI.Invoke("Console", "_global.Console.ClearHistory")
-        UI.SetString("Console", "_global.Console.ConsoleInstance.CommandHistory.text", "Ha. You wanted to run '" + enteredText + "', right?")
+        ; UI.Invoke("Console", "_global.Console.ClearHistory")
+        UI.InvokeString("Console", "_global.Console.AddHistory", "Ha. You wanted to run '" + enteredText + "', right?\n")
+        ; UI.SetString("Console", "_global.Console.ConsoleInstance.CommandHistory.text", "Ha. You wanted to run '" + enteredText + "', right?")
+        UI.SetString("Console", "_global.Console.ConsoleInstance.CurrentSelection.text", "Command: " + enteredText)
     endIf
 endEvent
 
