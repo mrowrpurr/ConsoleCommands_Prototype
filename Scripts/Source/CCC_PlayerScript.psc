@@ -28,7 +28,11 @@ event OnKeyDown(int keyCode)
             Debug.Notification("Enabled custom commands")
         endIf
     elseIf keyCode == 45 ; x
-        UI.InvokeString("Console", "_global.Console.ConsoleInstance.ExecuteCommand", "player.additem f 1000")
+        ; UI.InvokeString("Console", "_global.Console.ConsoleInstance.ExecuteCommand", "player.additem f 1000")
+        string enteredText = UI.GetString("Console", "_global.Console.ConsoleInstance.CommandEntry.text")
+        UI.Invoke("Console", "_global.Console.ConsoleInstance.ResetCommandEntry")
+        UI.Invoke("Console", "_global.Console.ClearHistory")
+        UI.SetString("Console", "_global.Console.ConsoleInstance.CommandHistory.text", "Ha. You wanted to run '" + enteredText + "', right?")
     endIf
 endEvent
 
