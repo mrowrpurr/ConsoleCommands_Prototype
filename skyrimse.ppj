@@ -18,6 +18,7 @@
         <Variable Name="ImportsFolder" Value="C:\Users\mrowr\Dropbox\Skyrim\Imports" />
     </Variables>
     <Imports>
+        <Import>@ModsFolder\ConsoleHelper\Scripts\Source</Import>
         <Import>@ImportsFolder\SKSE64\Scripts\Source</Import>
         <!-- <Import>@ImportsFolder\PapyrusUtil\Scripts\Source</Import> -->
         <!-- <Import>@ImportsFolder\UIExtensions\scripts\source</Import> -->
