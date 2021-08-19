@@ -42,7 +42,6 @@ endFunction
 ;; Flags
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO Don't let conflicting flags be added, e.g. same with Command and a Subcommand (diff subcommands can have ones with the same name tho)
 function AddFlag(string name, string command = "", string subcommand = "", string short = "") global
     __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
     int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
@@ -63,7 +62,7 @@ endFunction
 ;; Options
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-function AddFloatOption(string name, string command = "", string subcommand = "", string short = "", float default = 0.0) global
+function AddOption(string type, string name, string command = "", string subcommand = "", string short = "") global
     __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
     int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
     int optionsMap = JMap.getObj(commandOrSubcommandMap, ccc.OPTIONS_KEY)
@@ -71,21 +70,36 @@ function AddFloatOption(string name, string command = "", string subcommand = ""
     JMap.setStr(optionMap, ccc.FLAG_OPTION_TYPE_KEY, ccc.OPTION_TYPE)
     JMap.setStr(optionMap, ccc.NAME_KEY, name)
     JMap.setStr(optionMap, ccc.SHORT_NAME_KEY, short)
-    JMap.setStr(optionMap, ccc.OPTION_TYPE_KEY, ccc.FLOAT_TYPE)
+    JMap.setStr(optionMap, ccc.OPTION_TYPE_KEY, type)
     JMap.setObj(optionsMap, name, optionMap)
+endFunction
+
+function AddFloatOption(string name, string command = "", string subcommand = "", string short = "") global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    AddOption(ccc.FLOAT_TYPE, name, command, subcommand, short)
+endFunction
+
+function AddIntOption(string name, string command = "", string subcommand = "", string short = "") global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    AddOption(ccc.INT_TYPE, name, command, subcommand, short)
+endFunction
+
+function AddStringOption(string name, string command = "", string subcommand = "", string short = "") global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    AddOption(ccc.STRING_TYPE, name, command, subcommand, short)
 endFunction
 
 float function GetFloatOption(string option, string commandText, float default = 0.0) global
     return ParseResult_GetFloatOption(Parse(commandText), option, default)
 endFunction
 
-; string function GetStringOption(string flag, string commandText) global
-;     ; return ParseResult_HasFlag(Parse(commandText), flag)
-; endFunction
+int function GetIntOption(string option, string commandText, int default = 0) global
+    return ParseResult_GetIntOption(Parse(commandText), option, default)
+endFunction
 
-; int function GetIntOption(string flag, string commandText) global
-;     ; return ParseResult_HasFlag(Parse(commandText), flag)
-; endFunction
+string function GetStringOption(string option, string commandText, string default = "") global
+    return ParseResult_GetStringOption(Parse(commandText), option, default)
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Simple Parsing Helper Functions (return strings etc)
@@ -111,6 +125,18 @@ float function ParseResult_GetFloatOption(int parseResult, string option, float 
     __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
     int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
     return JMap.getFlt(optionsMap, option, default)
+endFunction
+
+int function ParseResult_GetIntOption(int parseResult, string option, int default = 0) global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
+    return JMap.getInt(optionsMap, option, default)
+endFunction
+
+string function ParseResult_GetStringOption(int parseResult, string option, string default = "") global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
+    return JMap.getStr(optionsMap, option, default)
 endFunction
 
 int function Parse(string commandText) global

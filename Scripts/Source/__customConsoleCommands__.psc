@@ -70,7 +70,6 @@ string property OPTION_TYPE_KEY      = "optionType"  autoReadonly
 string property FLOAT_TYPE           = "float"       autoReadonly
 string property INT_TYPE             = "int"         autoReadonly
 string property STRING_TYPE          = "string"      autoReadonly
-string property FORM_TYPE            = "form"        autoReadonly
 
 ; Console Helper integration
 string CONSOLE_HELPER_EVENT_NAME  = "CustomConsoleCommand_INTERNAL"
@@ -292,8 +291,10 @@ function SetOptionMapValue(int optionMap, int option, string value)
     string optionType = JMap.getStr(option, OPTION_TYPE_KEY)
     if optionType == FLOAT_TYPE
         JMap.setFlt(optionMap, optionName, value as float)
-    else
-        ;
+    elseIf optionType == INT_TYPE
+        JMap.setInt(optionMap, optionName, value as int)
+    elseIf optionType == STRING_TYPE
+        JMap.setStr(optionMap, optionName, value)
     endIf
 endFunction
 
