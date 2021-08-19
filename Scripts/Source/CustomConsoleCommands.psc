@@ -1,77 +1,55 @@
 scriptName CustomConsoleCommands hidden
-{Global interface for Custom Console Commands
+{Global interface for Custom Console Commands (for advanced usage)
 
 It is recommended to extend ConsoleCommand to implement individual commands,
 but everything ConsoleCommand provides can also be impemented via CustomConsoleCommands.}
+
+; REMINDER - CUSTOM Subcommands have have their own FLAGS!!!
+; WHEN ADDING A **GLOBAL** Option or Flag, add it to the lists of all Subcommand Options/Flags? Maybe? Hmm.....
 
 ; Returns the current version of Custom Console Commands
 float function GetCurrentVersion() global
     return 2.0
 endFunction
 
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-;;; TODO
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-
-bool function IsListeningForCommands() global
+function RegisterCommand(string command, string description = "", string defaultSubcommand = "", float version = 1.0, bool helpSubcommand = true, bool versionSubcommand = true, ConsoleCommand commandInstance = None, string callbackEvent = "") global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int commandMap = ccc.GetNewCommandMapID(command) 
+    JMap.setStr(commandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
 endFunction
 
-function ListenForCommands() global
-endFunction
-
-function RegisterCommand(string command, string description = "", string defaultSubcommand = "", \
-    float version = 1.0, bool helpSubcommand = true, bool versionSubcommand = true, \
-    ConsoleCommand commandInstance = None, string callbackEvent = "") global
-
-    ; TODO deal with if it already exists
-
-    int commandMap = __customConsoleCommands__.GetNewCommandMapID(command) 
-    JMap.setStr(commandMap, "name", command)
-    JMap.setStr(commandMap, "callbackEvent", callbackEvent)
-
-    ; TODO  ALWAYS add the Options and Flags map etc etc etc etc for each lookup
-endFunction
-
-function RegisterSubcommand(string command, string subcommand, string description = "", string defaultSubcommand = "", \
-    ConsoleCommand commandInstance = None, string callbackEvent = "") global
-
-    ; TODO deal with if it already exists
-    int commandMap = __customConsoleCommands__.GetExistingCommandMapID(command)
-    int subcommandsMap = JMap.getObj(commandMap, "subcommands")
-    if ! subcommandsMap
-        subcommandsMap = JMap.object()
-        JMap.setObj(commandMap, "subcommands", subcommandsMap)
-    endIf
-
+function RegisterSubcommand(string command, string subcommand, string description = "", string defaultSubcommand = "", ConsoleCommand commandInstance = None, string callbackEvent = "") global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int commandMap = ccc.GetExistingCommandMapID(command)
+    int subcommandsMap = JMap.getObj(commandMap, ccc.SUBCOMMANDS_KEY)
     int subcommandMap = JMap.object()
-    JMap.setStr(subcommandMap, "name", subcommand)
-    JMap.setStr(subcommandMap, "callbackEvent", callbackEvent)
+    JMap.setStr(subcommandMap, ccc.NAME_KEY, subcommand)
+    JMap.setStr(subcommandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
     JMap.setObj(subcommandsMap, subcommand, subcommandMap)
+endFunction
 
-    ; TODO  ALWAYS add the Options and Flags map etc etc etc etc for each lookup
+function AddFloatOption(string name, string command = "", string subcommand = "", string short = "", float default = 0.0) global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
+    int optionsMap = JMap.getObj(commandOrSubcommandMap, ccc.OPTIONS_KEY)
 endFunction
 
 ; TODO Don't let conflicting flags be added, e.g. same with Command and a Subcommand (diff subcommands can have ones with the same name tho)
 function AddFlag(string name, string command = "", string subcommand = "", string short = "") global
-    int commandOrSubcommandMap = __customConsoleCommands__.GetCommandOrSubcommandMapID(command, subcommand)
-    ; TODO handle if flag already there!
-
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
     int flagsMap = JMap.getObj(commandOrSubcommandMap, "flags")
-    if ! flagsMap
-        flagsMap = JMap.object()
-        JMap.setObj(commandOrSubcommandMap, "flags", flagsMap)
-    endIf
 
     int flagMap = JMap.object()
     JMap.setInt(flagMap, "isFlag", 1)
     JMap.setInt(flagMap, "isOption", 0)
-    JMap.setStr(flagMap, "name", name)
-    JMap.setStr(flagMap, "short", short)
+    JMap.setStr(flagMap, ccc.NAME_KEY, name)
+    JMap.setStr(flagMap, ccc.SHORT_NAME_KEY, short)
     JMap.setObj(flagsMap, name, flagMap)
 
     ; Map of flag arguments to the flag IDs
-    int commandMap = __customConsoleCommands__.GetExistingCommandMapID(command)
-    int flagAndOptionsArgumentsMap = JMap.getObj(commandOrSubcommandMap, "flagsAndOptions")
+    int commandMap = ccc.GetExistingCommandMapID(command)
+    int flagAndOptionsArgumentsMap = JMap.getObj(commandOrSubcommandMap, "flagsAndOptions") ; REDO THIS
     if ! flagAndOptionsArgumentsMap
         flagAndOptionsArgumentsMap = JMap.object()
         JMap.setObj(commandMap, "flagsAndOptions", flagAndOptionsArgumentsMap)
@@ -94,63 +72,53 @@ int function GetIntOption(string flag, string commandText) global
     ; return ParseResult_HasFlag(Parse(commandText), flag)
 endFunction
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Simple Parsing Helper Functions (return strings etc)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+string function ParseResult_Command(int parseResult) global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    return JMap.getStr(parseResult, ccc.COMMAND_KEY)
+endFunction
+
+string function ParseResult_Subcommand(int parseResult) global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    return JMap.getStr(parseResult, ccc.SUBCOMMAND_KEY)
+endFunction
+
 bool function ParseResult_HasFlag(int parseResult, string flag) global
-    int flagsArray = JMap.getObj(parseResult, "flags")
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int flagsArray = JMap.getObj(parseResult, ccc.FLAGS_KEY)
     return JArray.findStr(flagsArray, flag) > -1
 endFunction
 
 int function Parse(string commandText) global
-    __customConsoleCommands__.Debug("Parse: " + commandText)
-    int result = JMap.object()  
-    int flagsArray = JArray.object()
-    int optionsMap = JMap.object()  
-    int argumentsArray = JArray.object()
+    return __customConsoleCommands__.GetInstance().Parse(commandText)
+endFunction
 
-    JMap.setStr(result, "command", "")
-    JMap.setStr(result, "subcommand", "")
-    JMap.setStr(result, "text", commandText)
-    JMap.setObj(result, "flags", flagsArray)
-    JMap.setObj(result, "options", optionsMap)
-    JMap.setObj(result, "arguments", argumentsArray)
 
-    string[] commandTextParts = StringUtil.Split(commandText, " ")
 
-    string command = commandTextParts[0]
-    int commandMap = __customConsoleCommands__.GetExistingCommandMapID(command)
-    if ! commandMap
-        return result
-    else
-        JMap.setStr(result, "command", command)
-    endIf
 
-    string subcommand
-    int flagAndOptionArgumentsMap = JMap.getObj(commandMap, "flagsAndOptions")
-    int subcommandsMap = JMap.getObj(commandMap, "subcommands")
 
-    ; TODO loop over the command's flags/options looking for them OR else a subcommand
-    int index = 1
-    while index < commandTextParts.Length
 
-        string arg = commandTextParts[index]
-        __customConsoleCommands__.Debug("Parse Arg: " + arg)
-        int flagOrOptionId = JMap.getObj(flagAndOptionArgumentsMap, arg)
-        if flagOrOptionId
-            if JMap.getInt(flagOrOptionId, "isFlag") == 1
-                JArray.addStr(flagsArray, JMap.getStr(flagOrOptionId, "name"))
-            else
-                ; TODO options
-            endIf
-        else
-            int subcommandMap = JMap.getObj(subcommandsMap, arg)
-            if subcommandMap
-                JMap.setStr(result, "subcommand", arg)
-            else
-                JArray.addStr(argumentsArray, arg)
-            endIf
-        endIf
 
-        index += 1
-    endWhile
 
-    return result
+
+
+
+
+
+;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
+;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
+;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
+;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
+
+;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
+;;; TODO
+;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
+
+bool function IsListeningForCommands() global
+endFunction
+
+function ListenForCommands() global
 endFunction

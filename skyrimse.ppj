@@ -20,7 +20,7 @@
     <Imports>
         <Import>@ModsFolder\ConsoleHelper\Scripts\Source</Import>
         <Import>@ImportsFolder\SKSE64\Scripts\Source</Import>
-        <!-- <Import>@ImportsFolder\PapyrusUtil\Scripts\Source</Import> -->
+        <Import>@ImportsFolder\PapyrusUtil\Scripts\Source</Import>
         <!-- <Import>@ImportsFolder\UIExtensions\scripts\source</Import> -->
         <Import>@ImportsFolder\JContainers\scripts\source</Import>
         <!-- <Import>@ImportsFolder\LibFire\Scripts\Source</Import> -->
