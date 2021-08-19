@@ -75,6 +75,10 @@ function AddFloatOption(string name, string command = "", string subcommand = ""
     JMap.setObj(optionsMap, name, optionMap)
 endFunction
 
+float function GetFloatOption(string option, string commandText, float default = 0.0) global
+    return ParseResult_GetFloatOption(Parse(commandText), option, default)
+endFunction
+
 ; string function GetStringOption(string flag, string commandText) global
 ;     ; return ParseResult_HasFlag(Parse(commandText), flag)
 ; endFunction
@@ -101,6 +105,12 @@ bool function ParseResult_HasFlag(int parseResult, string flag) global
     __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
     int flagsArray = JMap.getObj(parseResult, ccc.FLAGS_KEY)
     return JArray.findStr(flagsArray, flag) > -1
+endFunction
+
+float function ParseResult_GetFloatOption(int parseResult, string option, float default = 0.0) global
+    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
+    return JMap.getFlt(optionsMap, option, default)
 endFunction
 
 int function Parse(string commandText) global

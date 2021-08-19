@@ -91,7 +91,7 @@ endEvent
 
 ; Configure logging to Console/Notifications/Papyrus Log
 function ConfigureLogging()
-    LogToConsole = true ; TODO ** Turn this OFF for public release **
+    LogToConsole = false ; TODO ** Turn this OFF for public release **
     LogToPapyrus = true
     LogToNotifications = false
 endFunction
@@ -181,6 +181,7 @@ event OnCustomConsoleCommand(string skseEventName, string commandText, float _, 
         if eventName
             SendModEvent(eventName, commandText, 0.0)
             ; Pending Commands array support in ConsoleHelper
+            UI.InvokeString(ConsoleHelper.GetMenuName(), ConsoleHelper.GetInstanceTarget("AddHistory"), commandText)
             UI.InvokeString(ConsoleHelper.GetMenuName(), ConsoleHelper.GetInstanceTarget("Commands.push"), commandText)
         else
             ; Check for a script to invoke instead?
@@ -249,7 +250,6 @@ int function Parse(string commandText)
     while index < commandTextParts.Length
         string arg = commandTextParts[index]
 
-        InspectObject(flagsAndOptions)
         ; Is it a Flag or an Option?
         int flagOrOption = JMap.getObj(flagsAndOptions, arg)
         if flagOrOption
