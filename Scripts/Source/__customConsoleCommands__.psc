@@ -52,17 +52,25 @@ endFunction
 int property CommandsMapID auto
 
 ; Keys used in maps
-string property NAME_KEY           = "name"        autoReadonly
-string property COMMAND_KEY        = "command"     autoReadonly
-string property COMMAND_TEXT_KEY   = "text"        autoReadonly
-string property SUBCOMMAND_KEY     = "subcommand"  autoReadonly
-string property SUBCOMMANDS_KEY    = "subcommands" autoReadonly
-string property FLAGS_KEY          = "flags"       autoReadonly
-string property OPTIONS_KEY        = "options"     autoReadonly
-string property ARGUMENTS_KEY      = "arguments"   autoReadonly
-string property CALLBACK_EVENT_KEY = "callback"    autoReadonly
-string property DESCRIPTION_KEY    = "description" autoReadonly
-string property SHORT_NAME_KEY     = "short"       autoReadonly
+string property NAME_KEY             = "name"        autoReadonly
+string property COMMAND_KEY          = "command"     autoReadonly
+string property COMMAND_TEXT_KEY     = "text"        autoReadonly
+string property SUBCOMMAND_KEY       = "subcommand"  autoReadonly
+string property SUBCOMMANDS_KEY      = "subcommands" autoReadonly
+string property FLAGS_KEY            = "flags"       autoReadonly
+string property OPTIONS_KEY          = "options"     autoReadonly
+string property ARGUMENTS_KEY        = "arguments"   autoReadonly
+string property CALLBACK_EVENT_KEY   = "callback"    autoReadonly
+string property DESCRIPTION_KEY      = "description" autoReadonly
+string property SHORT_NAME_KEY       = "short"       autoReadonly
+string property FLAG_OPTION_TYPE_KEY = "type"        autoReadonly
+string property FLAG_TYPE            = "flag"        autoReadonly
+string property OPTION_TYPE          = "option"      autoReadonly
+string property OPTION_TYPE_KEY      = "optionType"  autoReadonly
+string property FLOAT_TYPE           = "float"       autoReadonly
+string property INT_TYPE             = "int"         autoReadonly
+string property STRING_TYPE          = "string"      autoReadonly
+string property FORM_TYPE            = "form"        autoReadonly
 
 ; Console Helper integration
 string CONSOLE_HELPER_EVENT_NAME  = "CustomConsoleCommand_INTERNAL"
@@ -165,7 +173,6 @@ event OnCustomConsoleCommand(string skseEventName, string commandText, float _, 
         int subcommand = ParseResult_SubcommandMap(result)
         if subcommand
             Debug("OnCustomConsoleCommand subcommand: " + CustomConsoleCommands.ParseResult_Subcommand(result))
-            InspectObject(subcommand)
             string subcommandEventName = JMap.getStr(subcommand, CALLBACK_EVENT_KEY)
             if subcommandEventName
                 eventName = subcommandEventName
@@ -173,6 +180,8 @@ event OnCustomConsoleCommand(string skseEventName, string commandText, float _, 
         endIf
         if eventName
             SendModEvent(eventName, commandText, 0.0)
+            ; Pending Commands array support in ConsoleHelper
+            UI.InvokeString(ConsoleHelper.GetMenuName(), ConsoleHelper.GetInstanceTarget("Commands.push"), commandText)
         else
             ; Check for a script to invoke instead?
             Debug("No event name for command: " + commandText)
@@ -230,30 +239,44 @@ int function Parse(string commandText)
         Debug("Parse: found command " + command)
         JMap.setStr(result, "command", command)
     endIf
-
-    string subcommand
-    int flagAndOptionArgumentsMap = JMap.getObj(commandMap, "flagsAndOptions")
     int subcommandsMap = JMap.getObj(commandMap, SUBCOMMANDS_KEY)
 
-    ; TODO loop over the command's flags/options looking for them OR else a subcommand
+    ; Build a Map of Option/Flags ==> Object ... FOR Command + Subcommand
+    int flagsAndOptions = JMap.object()
+    AddCommandOrSubcommandFlagsAndOptionsToMap(flagsAndOptions, commandMap)
+
     int index = 1
     while index < commandTextParts.Length
-
         string arg = commandTextParts[index]
-        Debug("Parse Arg: " + arg)
-        int flagOrOptionId = JMap.getObj(flagAndOptionArgumentsMap, arg)
-        if flagOrOptionId
-            if JMap.getInt(flagOrOptionId, "isFlag") == 1
-                JArray.addStr(flagsArray, JMap.getStr(flagOrOptionId, "name"))
+
+        InspectObject(flagsAndOptions)
+        ; Is it a Flag or an Option?
+        int flagOrOption = JMap.getObj(flagsAndOptions, arg)
+        if flagOrOption
+            string type = JMap.getStr(flagOrOption, FLAG_OPTION_TYPE_KEY)
+            ; Flag
+            if type == FLAG_TYPE
+                string flagName = JMap.getStr(flagOrOption, NAME_KEY)
+                JArray.addStr(flagsArray, flagName)
             else
-                ; TODO options
+                ; Option
+                string nextArgument = commandTextParts[index + 1]
+                if nextArgument
+                    SetOptionMapValue(optionsMap, flagOrOption, nextArgument)
+                    index += 1
+                else
+                    Debug("No value found for option: " + arg)
+                    JArray.addStr(argumentsArray, arg)
+                endIf
             endIf
         else
-            int subcommandMap = JMap.getObj(subcommandsMap, arg)
-            if subcommandMap
-                Debug("Parse: found subcommand " + arg)
+            ; Is it a Subcommand?
+            int subcommand = JMap.getObj(subcommandsMap, arg)
+            if subcommand
                 JMap.setStr(result, SUBCOMMAND_KEY, arg)
+                AddCommandOrSubcommandFlagsAndOptionsToMap(flagsAndOptions, subcommand)
             else
+                ; Add to Argument List
                 JArray.addStr(argumentsArray, arg)
             endIf
         endIf
@@ -264,9 +287,48 @@ int function Parse(string commandText)
     return result
 endFunction
 
+function SetOptionMapValue(int optionMap, int option, string value)
+    string optionName = JMap.getStr(option, NAME_KEY)
+    string optionType = JMap.getStr(option, OPTION_TYPE_KEY)
+    if optionType == FLOAT_TYPE
+        JMap.setFlt(optionMap, optionName, value as float)
+    else
+        ;
+    endIf
+endFunction
 
+function AddCommandOrSubcommandFlagsAndOptionsToMap(int flagsAndOptions, int commandOrSubcommandMap)
+    int flagsMap = JMap.getObj(commandOrSubcommandMap, FLAGS_KEY)
+    int optionsMap = JMap.getObj(commandOrSubcommandMap, OPTIONS_KEY)
 
+    ; Add Flags
+    string[] flagNames = JMap.allKeysPArray(flagsMap)
+    int index = 0
+    while index < flagNames.Length
+        string flagName = flagNames[index]
+        int flagMap = JMap.getObj(flagsMap, flagName)
+        JMap.setObj(flagsAndOptions, "--" + flagName, flagMap)
+        string short = JMap.getStr(flagMap, SHORT_NAME_KEY)
+        if short
+            JMap.setObj(flagsAndOptions, "-" + short, flagMap)
+        endIf
+        index += 1
+    endWhile
 
+    ; Add Options
+    string[] optionNames = JMap.allKeysPArray(optionsMap)
+    index = 0
+    while index < optionNames.Length
+        string optionName = optionNames[index]
+        int optionMap = JMap.getObj(optionsMap, optionName)
+        JMap.setObj(flagsAndOptions, "--" + optionName, optionMap)
+        string short = JMap.getStr(optionMap, SHORT_NAME_KEY)
+        if short
+            JMap.setObj(flagsAndOptions, "-" + short, optionMap)
+        endIf
+        index += 1
+    endWhile
+endFunction
 
 ; ; This is what determines which command should be run
 ; string[] RegisteredCommandPrefixes
