@@ -1,8 +1,8 @@
-scriptName CustomConsoleCommands hidden
+scriptName ConsoleCommands hidden
 {Global interface for Custom Console Commands (for advanced usage)
 
 It is recommended to extend ConsoleCommand to implement individual commands,
-but everything ConsoleCommand provides can also be impemented via CustomConsoleCommands.}
+but everything ConsoleCommand provides can also be impemented via ConsoleCommands.}
 
 ; REMINDER - CUSTOM Subcommands have have their own FLAGS!!!
 ; WHEN ADDING A **GLOBAL** Option or Flag, add it to the lists of all Subcommand Options/Flags? Maybe? Hmm.....
@@ -21,13 +21,13 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function RegisterCommand(string command, string description = "", string defaultSubcommand = "", float version = 1.0, bool helpSubcommand = true, bool versionSubcommand = true, ConsoleCommand commandInstance = None, string callbackEvent = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int commandMap = ccc.GetNewCommandMapID(command) 
     JMap.setStr(commandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
 endFunction
 
 function RegisterSubcommand(string command, string subcommand, string description = "", string defaultSubcommand = "", ConsoleCommand commandInstance = None, string callbackEvent = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int commandMap = ccc.GetExistingCommandMapID(command)
     int subcommandsMap = JMap.getObj(commandMap, ccc.SUBCOMMANDS_KEY)
     int subcommandMap = JMap.object()
@@ -43,7 +43,7 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AddFlag(string name, string command = "", string subcommand = "", string short = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
     int flagsMap = JMap.getObj(commandOrSubcommandMap, "flags")
 
@@ -63,7 +63,7 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AddOption(string type, string name, string command = "", string subcommand = "", string short = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
     int optionsMap = JMap.getObj(commandOrSubcommandMap, ccc.OPTIONS_KEY)
     int optionMap = JMap.object()
@@ -75,17 +75,17 @@ function AddOption(string type, string name, string command = "", string subcomm
 endFunction
 
 function AddFloatOption(string name, string command = "", string subcommand = "", string short = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     AddOption(ccc.FLOAT_TYPE, name, command, subcommand, short)
 endFunction
 
 function AddIntOption(string name, string command = "", string subcommand = "", string short = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     AddOption(ccc.INT_TYPE, name, command, subcommand, short)
 endFunction
 
 function AddStringOption(string name, string command = "", string subcommand = "", string short = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     AddOption(ccc.STRING_TYPE, name, command, subcommand, short)
 endFunction
 
@@ -106,41 +106,41 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 string function ParseResult_Command(int parseResult) global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     return JMap.getStr(parseResult, ccc.COMMAND_KEY)
 endFunction
 
 string function ParseResult_Subcommand(int parseResult) global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     return JMap.getStr(parseResult, ccc.SUBCOMMAND_KEY)
 endFunction
 
 bool function ParseResult_HasFlag(int parseResult, string flag) global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int flagsArray = JMap.getObj(parseResult, ccc.FLAGS_KEY)
     return JArray.findStr(flagsArray, flag) > -1
 endFunction
 
 float function ParseResult_GetFloatOption(int parseResult, string option, float default = 0.0) global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
     return JMap.getFlt(optionsMap, option, default)
 endFunction
 
 int function ParseResult_GetIntOption(int parseResult, string option, int default = 0) global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
     return JMap.getInt(optionsMap, option, default)
 endFunction
 
 string function ParseResult_GetStringOption(int parseResult, string option, string default = "") global
-    __customConsoleCommands__ ccc = __customConsoleCommands__.GetInstance()
+    __console_commands__ ccc = __console_commands__.GetInstance()
     int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
     return JMap.getStr(optionsMap, option, default)
 endFunction
 
 int function Parse(string commandText) global
-    return __customConsoleCommands__.GetInstance().Parse(commandText)
+    return __console_commands__.GetInstance().Parse(commandText)
 endFunction
 
 

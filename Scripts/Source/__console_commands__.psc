@@ -1,4 +1,4 @@
-scriptName __customConsoleCommands__ extends Quest hidden 
+scriptName __console_commands__ extends Quest hidden 
 {Private Quest script for persisting global data for Custom Console Commands}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -9,7 +9,7 @@ scriptName __customConsoleCommands__ extends Quest hidden
 bool   property LogToPapyrus                           auto
 bool   property LogToConsole                           auto ; <--- TODO: turn this off for mod release!
 bool   property LogToNotifications                     auto
-string property LOG_PREFIX = "[CustomConsoleCommands] " autoReadonly
+string property LOG_PREFIX = "[ConsoleCommands] " autoReadonly
 
 ; Logging function for debugging and providing information to users
 function Debug(string text)
@@ -26,7 +26,7 @@ endFunction
 
 ; Requires PapyrusUtil:
 function InspectObject(int obj)
-    string filePath = "Data/CustomConsoleCommands/Log/Object-" + obj + ".json"
+    string filePath = "Data/ConsoleCommands/Log/Object-" + obj + ".json"
     JValue.writeToFile(obj, filePath)
     ConsoleHelper.Print(MiscUtil.ReadFromFile(filePath))
 endFunction
@@ -36,12 +36,12 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; [INTERNAL]
-; Returns an instance of __customConsoleCommands__ (used for persisting all Custom Console Commands data)
+; Returns an instance of __console_commands__ (used for persisting all Custom Console Commands data)
 ; Please do not use the interface provided by this script.
-; Instead, use either the CustomConsoleCommands global interface
+; Instead, use either the ConsoleCommands global interface
 ; or, preferably, create commands by making Quest scripts which extend ConsoleCommand.
-__customConsoleCommands__ function GetInstance() global
-    return Game.GetFormFromFile(0x800, "CustomConsoleCommands.esp") as __customConsoleCommands__
+__console_commands__ function GetInstance() global
+    return Game.GetFormFromFile(0x800, "ConsoleCommands.esp") as __console_commands__
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -72,15 +72,15 @@ string property INT_TYPE             = "int"         autoReadonly
 string property STRING_TYPE          = "string"      autoReadonly
 
 ; Console Helper integration
-string CONSOLE_HELPER_EVENT_NAME  = "CustomConsoleCommand_INTERNAL"
-string CONSOLE_HELPER_CALLBACK_FN = "OnCustomConsoleCommand" 
+string CONSOLE_HELPER_EVENT_NAME  = "ConsoleCommand_INTERNAL"
+string CONSOLE_HELPER_CALLBACK_FN = "OnConsoleCommand" 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mod Initialization
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Runs the first time the mod is installed.
-; See ___customConsoleCommands___.OnPlayerLoadGame() for load event handling
+; See ___console_commands___.OnPlayerLoadGame() for load event handling
 ; after the mod has already been installed.
 event OnInit()
     ConfigureLogging()
@@ -145,7 +145,7 @@ endFunction
 ;; Start/Stop Listening for Custom Console Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Register handler with ConsoleHelper to begin listening to CustomConsoleCommands
+; Register handler with ConsoleHelper to begin listening to ConsoleCommands
 function ListenForCommands()
     ConsoleHelper.RegisterForCustomCommands(CONSOLE_HELPER_EVENT_NAME)
     RegisterForModEvent(CONSOLE_HELPER_EVENT_NAME, CONSOLE_HELPER_CALLBACK_FN)
@@ -162,16 +162,16 @@ endFunction
 
 ; When Custom Console Commands are enabled and listening for commands,
 ; this handles *all* of the commands which are sent to the console.
-event OnCustomConsoleCommand(string skseEventName, string commandText, float _, Form sender)
-    Debug("OnCustomConsoleCommand " + commandText)
+event OnConsoleCommand(string skseEventName, string commandText, float _, Form sender)
+    Debug("OnConsoleCommand " + commandText)
     int result = Parse(commandText)
     int command = ParseResult_CommandMap(result)
     if command
-        Debug("OnCustomConsoleCommand command: " + CustomConsoleCommands.ParseResult_Command(result))
+        Debug("OnConsoleCommand command: " + ConsoleCommands.ParseResult_Command(result))
         string eventName = JMap.getStr(command, CALLBACK_EVENT_KEY)
         int subcommand = ParseResult_SubcommandMap(result)
         if subcommand
-            Debug("OnCustomConsoleCommand subcommand: " + CustomConsoleCommands.ParseResult_Subcommand(result))
+            Debug("OnConsoleCommand subcommand: " + ConsoleCommands.ParseResult_Subcommand(result))
             string subcommandEventName = JMap.getStr(subcommand, CALLBACK_EVENT_KEY)
             if subcommandEventName
                 eventName = subcommandEventName
@@ -197,17 +197,21 @@ endEvent
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 int function ParseResult_CommandMap(int parseResult)
-    string command = CustomConsoleCommands.ParseResult_Command(parseResult)
+    string command = ConsoleCommands.ParseResult_Command(parseResult)
     if command
         return JMap.getObj(CommandsMapID, command)
+    else
+        return 0
     endIf
 endFunction
 
 int function ParseResult_SubcommandMap(int parseResult)
-    string subcommand = CustomConsoleCommands.ParseResult_Subcommand(parseResult)
+    string subcommand = ConsoleCommands.ParseResult_Subcommand(parseResult)
     if subcommand
         int commandSubcommands = JMap.getObj(ParseResult_CommandMap(parseResult), SUBCOMMANDS_KEY)
         return JMap.getObj(commandSubcommands, subcommand)
+    else
+        return 0
     endIf
 endFunction
 
@@ -272,6 +276,7 @@ int function Parse(string commandText)
             ; Is it a Subcommand?
             int subcommand = JMap.getObj(subcommandsMap, arg)
             if subcommand
+                Debug("Subcommand found: " + arg)
                 JMap.setStr(result, SUBCOMMAND_KEY, arg)
                 AddCommandOrSubcommandFlagsAndOptionsToMap(flagsAndOptions, subcommand)
             else
@@ -343,7 +348,7 @@ endFunction
 
 
 
-; event OnCustomConsoleCommand(string eventName, string commandText, float _, Form sender)
+; event OnConsoleCommand(string eventName, string commandText, float _, Form sender)
 ;     int commandIndex = FindCommandIndex(commandText)
 ;     if commandIndex > -1
 ;         string commandName = RegisteredCommandNames[commandIndex]

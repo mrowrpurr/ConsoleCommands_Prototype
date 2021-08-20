@@ -31,7 +31,7 @@ In your scripts, import `Scripts/Source/
 
 ```psc
 Event OnInit()
-  RegisterForModEvent(CustomConsoleCommands.RegisterCommand("Gold"), "OnGoldCommand")
+  RegisterForModEvent(ConsoleCommands.RegisterCommand("Gold"), "OnGoldCommand")
 EndEvent
 
 ; Usage:
