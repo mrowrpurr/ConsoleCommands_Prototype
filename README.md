@@ -2,12 +2,6 @@
 
 ![Custom Console Commands](Images/Logo.png)
 
----
-
-> _Thanks to milzschnitte for reverse engineering the Console menu value locations_
-
----
-
 Utility mod for mod authors.
 
 Makes it easy to create your own custom commands for the ~ Skyrim console.
