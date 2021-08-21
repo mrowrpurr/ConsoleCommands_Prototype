@@ -6,13 +6,29 @@ scriptName __console_commands__ extends Quest hidden
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Logging configuration
+bool   property DebugToPapyrus                         auto
+bool   property DebugToConsole                         auto ; <--- TODO: turn this off for mod release!
+bool   property DebugToNotifications                   auto
 bool   property LogToPapyrus                           auto
-bool   property LogToConsole                           auto ; <--- TODO: turn this off for mod release!
+bool   property LogToConsole                           auto
 bool   property LogToNotifications                     auto
 string property LOG_PREFIX = "[ConsoleCommands] " autoReadonly
 
-; Logging function for debugging and providing information to users
+; Logging function for debugging
 function Debug(string text)
+    if DebugToPapyrus
+        Debug.Trace(LOG_PREFIX + text)
+    endIf
+    if DebugToConsole
+        ConsoleHelper.Print(LOG_PREFIX + text + "\n")
+    endIf
+    if DebugToNotifications
+        Debug.Notification(LOG_PREFIX + text)
+    endIf
+endFunction
+
+; Logging function for providing information to users
+function Log(string text)
     if LogToPapyrus
         Debug.Trace(LOG_PREFIX + text)
     endIf
@@ -48,29 +64,43 @@ endFunction
 ;; Fields and Properties
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Top-Level Primary Map which holds command information
-int property CommandsMapID auto
+; Whether the mod has been initialized yet
+bool _initialized
+
+; Whether we're currently listening for any console commands
+bool _listeningForCommands
+
+; References to data for storing commands and their data
+int _data
+int _commandNameToObjectMap
+int _commandIdToObjectMap
+int _enabledCommandAndSubcommandIdsArray
 
 ; Keys used in maps
-string property NAME_KEY             = "name"        autoReadonly
-string property COMMAND_KEY          = "command"     autoReadonly
-string property COMMAND_TEXT_KEY     = "text"        autoReadonly
-string property SUBCOMMAND_KEY       = "subcommand"  autoReadonly
-string property SUBCOMMANDS_KEY      = "subcommands" autoReadonly
-string property FLAGS_KEY            = "flags"       autoReadonly
-string property OPTIONS_KEY          = "options"     autoReadonly
-string property ARGUMENTS_KEY        = "arguments"   autoReadonly
-string property CALLBACK_EVENT_KEY   = "callback"    autoReadonly
-string property SCRIPT_INSTANCE_KEY  = "script"      autoReadonly
-string property DESCRIPTION_KEY      = "description" autoReadonly
-string property SHORT_NAME_KEY       = "short"       autoReadonly
-string property FLAG_OPTION_TYPE_KEY = "type"        autoReadonly
-string property FLAG_TYPE            = "flag"        autoReadonly
-string property OPTION_TYPE          = "option"      autoReadonly
-string property OPTION_TYPE_KEY      = "optionType"  autoReadonly
-string property FLOAT_TYPE           = "float"       autoReadonly
-string property INT_TYPE             = "int"         autoReadonly
-string property STRING_TYPE          = "string"      autoReadonly
+string property NAME_KEY             = "name"            autoReadonly
+string property COMMAND_KEY          = "command"         autoReadonly
+string property COMMANDS_KEY         = "commands"        autoReadonly
+string property COMMAND_NAMES_KEY    = "commandNames"    autoReadonly
+string property ENABLED_COMMANDS_KEY = "enabledCommands" autoReadonly
+string property COMMAND_MAP_KEY      = "commandMap"      autoReadonly
+string property COMMAND_TEXT_KEY     = "text"            autoReadonly
+string property SUBCOMMAND_KEY       = "subcommand"      autoReadonly
+string property SUBCOMMANDS_KEY      = "subcommands"     autoReadonly
+string property FLAGS_KEY            = "flags"           autoReadonly
+string property OPTIONS_KEY          = "options"         autoReadonly
+string property ARGUMENTS_KEY        = "arguments"       autoReadonly
+string property CALLBACK_EVENT_KEY   = "callback"        autoReadonly
+string property SCRIPT_INSTANCE_KEY  = "script"          autoReadonly
+string property DESCRIPTION_KEY      = "description"     autoReadonly
+string property SHORT_NAME_KEY       = "short"           autoReadonly
+string property FLAG_OPTION_TYPE_KEY = "type"            autoReadonly
+string property ENABLED_KEY          = "enabled"         autoReadonly
+string property FLAG_TYPE            = "flag"            autoReadonly
+string property OPTION_TYPE          = "option"          autoReadonly
+string property OPTION_TYPE_KEY      = "optionType"      autoReadonly
+string property FLOAT_TYPE           = "float"           autoReadonly
+string property INT_TYPE             = "int"             autoReadonly
+string property STRING_TYPE          = "string"          autoReadonly
 
 ; Console Helper integration
 string CONSOLE_HELPER_EVENT_NAME  = "ConsoleCommandsEvent_INTERNAL"
@@ -84,10 +114,10 @@ string CONSOLE_HELPER_CALLBACK_FN = "OnConsoleCommand"
 ; and ready to store, e.g. for cases when other mods' OnInit
 ; loads before ours :)
 function Setup()
-    if CommandsMapID == 0
+    if ! _initialized
+        _initialized = true
         SetupCommandsDataRepository()
         ConfigureLogging()
-        ListenForCommands()
     endIf
 endFunction
 
@@ -100,70 +130,182 @@ endEvent
 
 ; Configure logging to Console/Notifications/Papyrus Log
 function ConfigureLogging()
-    LogToConsole = false ; TODO ** Turn this OFF for public release **
+    DebugToConsole = false ; TODO ** Turn this OFF for public release **
+    DebugToPapyrus = true
+    DebugToNotifications = false
+    LogToConsole = true
     LogToPapyrus = true
     LogToNotifications = false
 endFunction
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Core Data
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; Setup the JContainer JMap which stores *all* information about commands.
 function SetupCommandsDataRepository()
-    CommandsMapID = JMap.object()
-    JValue.retain(CommandsMapID)
+    _data = JMap.object()
+    JValue.retain(_data)
+
+    _commandNameToObjectMap = JMap.object()
+    _commandIdToObjectMap = JIntMap.object()
+    _enabledCommandAndSubcommandIdsArray = JArray.object()
+
+    JMap.setObj(_data, COMMANDS_KEY, _commandIdToObjectMap)
+    JMap.setObj(_data, COMMAND_NAMES_KEY, _commandNameToObjectMap)
+    JMap.setObj(_data, ENABLED_COMMANDS_KEY, _enabledCommandAndSubcommandIdsArray)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; JContainers Getters
+;; Data Getters
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Create a new JMap to represent this command and its information
-int function GetNewCommandMapID(string command)
-    int commandMap = JMap.object()
-    JMap.setStr(commandMap, NAME_KEY, command)
-    JMap.setObj(commandMap, SUBCOMMANDS_KEY, JMap.object())
-    JMap.setObj(commandMap, FLAGS_KEY, JMap.object())
-    JMap.setObj(commandMap, OPTIONS_KEY, JMap.object())
-    JMap.setObj(CommandsMapID, command, commandMap)
-    return commandMap
+; Use this to get the map of command names ==> id of command
+int function GetMap_CommandNamesToMaps()
+    if _commandNameToObjectMap == 0
+        SetupCommandsDataRepository()
+    endIf
+    return _commandNameToObjectMap
 endFunction
 
-; Get the JMap of an existing command (else returns 0)
-int function GetExistingCommandMapID(string command)
-    return JMap.getObj(CommandsMapID, command)
+; Use this to get the map of ids ==> command objects
+; This is just so that there is a retained data structure
+; which stores references to these objects :)
+int function GetMap_CommandIdsToMaps()
+    if _commandIdToObjectMap
+        SetupCommandsDataRepository()
+    endIf
+    return _commandIdToObjectMap
 endFunction
 
-; Get the JMap of an existing subcommand (else returns 0)
-int function GetExistingSubcommandMapID(string command, string subcommand)
-    int subcommandsMap = JMap.getObj(GetExistingCommandMapID(command), SUBCOMMANDS_KEY)
-    return JMap.getObj(subcommandsMap, subcommand)
+; Helper to get command map object for command with provided name (or returns 0)
+int function GetCommandMapForCommandName(string command)
+    return JMap.getObj(GetMap_CommandNamesToMaps(), command)
 endFunction
 
-; Get the JMap of an existing command or, if it is provided, subcommand (else returns 0)
-int function GetCommandOrSubcommandMapID(string command, string subcommand = "")
-    if subcommand
-        return GetExistingSubcommandMapID(command, subcommand)
-    else
-        return GetExistingCommandMapID(command)
+; Helper to get subcommand map object for subcommand with provided name (or returns 0)
+int function GetSubcommandMapForName(string command, string subcommand)
+    int commandMap = GetCommandMapForCommandName(command)
+    if commandMap
+        int subcommandsMap = JMap.getObj(commandMap, SUBCOMMANDS_KEY)
+        return JMap.getObj(subcommandsMap, subcommand)
     endIf
 endFunction
 
-; Get the JMap of the subcommand for the provided command JMap (else returns 0)
-int function GetSubcommand(int commandMap, string subcommand)
-    ;;;
+; Helper to get command OR subcommand map object for the provided name(s) (or returns 0)
+int function GetCommandOrSubcommandMapForName(string command, string subcommand)
+    int commandMap = GetCommandMapForCommandName(command)
+    if commandMap
+        if subcommand
+            int subcommandsMap = JMap.getObj(commandMap, SUBCOMMANDS_KEY)
+            int subcommandMap = JMap.getObj(subcommandsMap, subcommand)
+            if subcommandMap
+                return subcommandMap
+            endIf
+        endIf
+    endIf
+    return commandMap
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Data Helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Returns whether a command is registered with the given name
+bool function CommandExists(string command)
+    return JMap.hasKey(GetMap_CommandNamesToMaps(), command)
+endFunction
+
+; Create a new JMap to represent this command and its information
+; The command is added to the list of registered command
+; This does not check to see if a command with the same name already exists
+int function CreateAndRegisterNewCommandMapForCommandName(string command)
+    int commandMap = CreateAndRegisterNewCommandMap()
+    JMap.setStr(commandMap, NAME_KEY, command)
+    JMap.setObj(GetMap_CommandNamesToMaps(), command, commandMap) ; Add it to the map of names => objects
+    return commandMap
+endFunction
+
+; Creates and returns a new, registered command map (without a name)
+int function CreateAndRegisterNewCommandMap()
+    int commandMap = JMap.object()
+    JMap.setObj(commandMap, SUBCOMMANDS_KEY, JMap.object())
+    JMap.setObj(commandMap, FLAGS_KEY, JMap.object())
+    JMap.setObj(commandMap, OPTIONS_KEY, JMap.object())
+    JIntMap.setObj(GetMap_CommandIdsToMaps(), commandMap, commandMap) ; Add it to the ID map which retains everything
+    return commandMap
+endFunction
+
+int function CreateAndRegisterNewSubcommand(int commandMap, string subcommand)
+    int subcommandMap = JMap.object()
+    JMap.setStr(subcommandMap, NAME_KEY, subcommand)
+    JMap.setObj(subcommandMap, FLAGS_KEY, JMap.object())
+    JMap.setObj(subcommandMap, OPTIONS_KEY, JMap.object())
+    int subcommandsMap = JMap.getObj(commandMap, SUBCOMMANDS_KEY)
+    JMap.setObj(subcommandsMap, subcommand, subcommandMap)
+    return subcommandMap
+endfunction
+
+function EnableCommandOrSubcommand(int id)
+    JArray.addObj(_enabledCommandAndSubcommandIdsArray, id)
+    StartOrStopListeningForCommandsBasedOnEnabledCommands()
+endFunction
+
+function DisableCommandOrSubcommand(int id)
+    JArray.eraseObject(_enabledCommandAndSubcommandIdsArray, id)
+    StartOrStopListeningForCommandsBasedOnEnabledCommands()
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Start/Stop Listening for Custom Console Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Register handler with ConsoleHelper to begin listening to ConsoleCommands
+; Register handler with ConsoleHelper to begin listening to Console Commands
 function ListenForCommands()
+    _listeningForCommands = true
     ConsoleHelper.RegisterForCustomCommands(CONSOLE_HELPER_EVENT_NAME)
     RegisterForModEvent(CONSOLE_HELPER_EVENT_NAME, CONSOLE_HELPER_CALLBACK_FN)
 endFunction
 
-; TODO
+; Unregister handler with ConsoleHelper to stop listening to Console Commands
 function StopListeningForCommands()
-    ; TODO
+    _listeningForCommands = false
+    ConsoleHelper.UnregisterForCustomCommands(CONSOLE_HELPER_EVENT_NAME)
+    UnregisterForModEvent(CONSOLE_HELPER_EVENT_NAME)
+endFunction
+
+; Called automatically when you Enable or Disable a command or subcommand.
+; If any commands are enabled, we'll make sure we're listening.
+; If no commands are enabled, we'll stop listening.
+function StartOrStopListeningForCommandsBasedOnEnabledCommands()
+    bool anyEnabledCommands = JArray.count(_enabledCommandAndSubcommandIdsArray)
+    if _listeningForCommands && ! anyEnabledCommands
+        StopListeningForCommands()
+        Debug("Stopped listening for commands (no more enabled commands)")
+    elseIf ! _listeningForCommands && anyEnabledCommands
+        ListenForCommands()
+        Debug("Started listening for commands")
+    endIf
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Misc Helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+string function GetCommandNameForScript(ConsoleCommand scriptInstance)
+    string fullScriptName = scriptInstance
+    int space = StringUtil.Find(fullScriptName, " ")
+    string nameOfScript = StringUtil.Substring(fullScriptName, 1, space - 1)
+    int commandWord = StringUtil.Find(nameOfScript, "Command")
+    if commandWord > -1 && commandWord != 0
+        string commandName = StringUtil.Substring(nameOfScript, 0, commandWord - 1)
+        return commandName
+    endIf
+    return ""
+endFunction
+
+function SetupNewCommandAndItsSubcommands(int commandMap)
+
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -233,6 +375,7 @@ function SendCommandModEvent(string modEventName, int parseResult)
 endFunction
 
 function InvokeCommandOnScriptInstance(ConsoleCommand scriptInstance, int parseResult)
+    Debug.MessageBox("TODO INVOKE COMMAND")
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -259,12 +402,7 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 int function ParseResult_CommandMap(int parseResult)
-    string command = ConsoleCommands.ParseResult_Command(parseResult)
-    if command
-        return JMap.getObj(CommandsMapID, command)
-    else
-        return 0
-    endIf
+    return JMap.getObj(parseResult, COMMAND_MAP_KEY)
 endFunction
 
 int function ParseResult_SubcommandMap(int parseResult)
@@ -288,8 +426,6 @@ int function Parse(string commandText, bool commandOnly = false)
     int optionsMap = JMap.object()  
     int argumentsArray = JArray.object()
 
-    JMap.setStr(result, COMMAND_KEY, "")
-    JMap.setStr(result, SUBCOMMAND_KEY, "")
     JMap.setStr(result, COMMAND_TEXT_KEY, commandText)
     JMap.setObj(result, FLAGS_KEY, flagsArray)
     JMap.setObj(result, OPTIONS_KEY, optionsMap)
@@ -298,11 +434,12 @@ int function Parse(string commandText, bool commandOnly = false)
     string[] commandTextParts = StringUtil.Split(commandText, " ")
 
     string command = commandTextParts[0]
-    int commandMap = GetExistingCommandMapID(command)
+    int commandMap = GetCommandMapForCommandName(command)
     if ! commandMap
         return result
     else
         Debug("Parse: found command " + command)
+        JMap.setObj(result, COMMAND_MAP_KEY, commandMap)
         JMap.setStr(result, "command", command)
         if commandOnly
             return result

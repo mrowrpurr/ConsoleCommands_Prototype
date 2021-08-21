@@ -5,8 +5,14 @@ scriptName ConsoleCommand extends Quest hidden
 ;; Private Fields
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Internal ID for the command information
+int _commandId
+
+; Whether or not the script and its subcommands have been explicitly disabled
+bool _enabled = true
+
+; Fields for the mostly recently run console command
 int      _parseResult
-string   _commandName
 string   _mostRecentCommandName
 string   _mostRecentSubcommandName
 string[] _mostRecentArguments
@@ -49,23 +55,95 @@ string property FullCommandText
 endProperty
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Command Name
+;; DSL for setting information about the console command
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-function Command(string name)
-    ; If this has already been configured, gotta reconfigure it!
-    ; ...
-    ; ...
-    _commandName = name
+; Miscellaneous function if you want to use it
+; Runs before any other functions including before Info()
+function Setup()
 endFunction
 
-string function GetCommandName()
-    return _commandName
+; Use this function to set the name of your command, version, etc.
+;
+; Example:
+;
+;   function Info()
+;     Name("mycommand")
+;     Version(1.0)
+;     Author("me")
+;   endFunction
+;
+function Info()
+endFunction
+
+; Recommended function to add your Options and Flags configuration to
+function Options()
+endFunction
+
+; Recommended function to add your Subcommand configuration to
+function Subcommands()
+endFunction
+
+; Set the console command name, e.g. "hello"
+;
+; This is optional if you name your ConsoleCommand "HelloCommand"
+function Name(string name)
+endFunction
+
+; Returns the 
+string function GetName()
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; .......
+;; Initialization
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; If you override this, you must call parent.OnInit()
+event OnInit()
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    _commandId = ccc.CreateAndRegisterNewCommandMap()
+
+    Setup()
+    Info()
+    Options()
+    Subcommands()
+
+    string commandName = GetName()
+    if ! commandName
+        commandName = ccc.GetCommandNameForScript(self)
+        if commandName
+            Name(commandName)
+        endIf
+    endIf
+
+    if commandName
+        ; If there's a name configured, we enable the main command and any default-enabled subcommands and start listening!
+        ; Unless they explicitly called Disable() in one of the setup functions
+        if _enabled
+            ccc.SetupNewCommandAndItsSubcommands(_commandId)
+        endIf
+    else
+        ccc.Log("Command name could not be deterined for script: " + self)
+    endIf
+endEvent
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Enable / Disable
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function Enable()
+    _enabled = true
+    ; TODO ccc.EnableCommandAndItsSubcommands()
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.Log("Enable() not yet fully supported")
+endFunction
+
+function Disable()
+    _enabled = false
+    ; TODO ccc.DisableCommandAndItsSubcommands()
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.Log("Disable() not yet fully supported")
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Command Invocation
@@ -166,25 +244,9 @@ endFunction
 ;; .......
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; .......
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ; function Info()
 ; endFunction
 
-event OnInit()
-    ; SCRIPT NAME ==> COMMAND NAME PARSING LOGIC:
-    ; string fullScriptName = self
-    ; int space = StringUtil.Find(fullScriptName, " ")
-    ; string nameOfScript = StringUtil.Substring(fullScriptName, 1, space - 1)
-    ; int commandWord = StringUtil.Find(nameOfScript, "Command")
-    ; if commandWord > -1 && commandWord != 0
-    ;     string commandName = StringUtil.Substring(nameOfScript, 0, commandWord - 1)
-    ;     ConsoleCommands.RegisterCommand(commandName, callbackEvent = "TempCallCommand")
-    ;     RegisterForModEvent("TempCallCommand", "OnTempCommandHandler")
-    ; endIf
-endEvent
 
 ; function Version(float version)
 ; endFunction

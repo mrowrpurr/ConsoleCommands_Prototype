@@ -7,10 +7,9 @@ float property CurrentlyInstalledVersion auto
 ; On Mod Installation
 event OnInit()
     CurrentlyInstalledVersion = ConsoleCommands.GetCurrentVersion()
-    __console_commands__.GetInstance().ListenForCommands()
+    __console_commands__.GetInstance().Setup()
 endEvent
 
 ; On Load Game when mod was previously installed
 event OnPlayerLoadGame()
-    __console_commands__.GetInstance().ListenForCommands()
 endEvent

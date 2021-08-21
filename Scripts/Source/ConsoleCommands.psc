@@ -17,27 +17,78 @@ float function GetCurrentVersion() global
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Start or Stop Listening for Commands
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function StartListeningForCommands() global
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.ListenForCommands()
+endFunction
+
+function StopListeningForCommands() global
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.StopListeningForCommands()
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Register Commands + Subcommands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-function RegisterCommand(string command, string description = "", string defaultSubcommand = "", float version = 1.0, bool helpSubcommand = true, bool versionSubcommand = true, ConsoleCommand commandInstance = None, string callbackEvent = "") global
+; Register a command
+function RegisterCommand(string command, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "", bool enabled = true) global
     __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.Setup()
-    int commandMap = ccc.GetNewCommandMapID(command) 
-    JMap.setStr(commandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
+    if ccc.CommandExists(command)
+        ccc.Log("Command already registered: " + command)
+    else
+        int commandMap = ccc.CreateAndRegisterNewCommandMapForCommandName(command) 
+        JMap.setInt(commandMap, ccc.ENABLED_KEY, enabled as int)
+        JMap.setStr(commandMap, ccc.DESCRIPTION_KEY, description)
+        if callbackEvent
+            JMap.setStr(commandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
+        endIf
+        if scriptInstance
+            JMap.setForm(commandMap, ccc.SCRIPT_INSTANCE_KEY, scriptInstance)
+        endIf
+        if enabled
+            ccc.EnableCommandOrSubcommand(commandMap)
+        endIf
+    endIf
 endFunction
 
-function RegisterSubcommand(string command, string subcommand, string description = "", string defaultSubcommand = "", ConsoleCommand commandInstance = None, string callbackEvent = "") global
+; Register a subcommand for an existing command
+function RegisterSubcommand(string command, string subcommand, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "", bool enabled = true) global
     __console_commands__ ccc = __console_commands__.GetInstance()
-    int commandMap = ccc.GetExistingCommandMapID(command)
-    int subcommandsMap = JMap.getObj(commandMap, ccc.SUBCOMMANDS_KEY)
-    int subcommandMap = JMap.object()
-    JMap.setStr(subcommandMap, ccc.NAME_KEY, subcommand)
-    JMap.setStr(subcommandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
-    JMap.setObj(subcommandMap, ccc.FLAGS_KEY, JMap.object())
-    JMap.setObj(subcommandMap, ccc.OPTIONS_KEY, JMap.object())
-    JMap.setObj(subcommandsMap, subcommand, subcommandMap)
+    int commandMap = ccc.GetCommandMapForCommandName(command)
+    if commandMap
+        int subcommandsMap = JMap.getObj(commandMap, ccc.SUBCOMMANDS_KEY)
+        int existingSubcommandMap = JMap.getObj(subcommandsMap, subcommand)
+        if existingSubcommandMap
+            ccc.Log("Subcommand already registered: " + command + " " + subcommand)
+        else
+            int subcommandMap = ccc.CreateAndRegisterNewSubcommand(commandMap, subcommand)
+            JMap.setInt(subcommandMap, ccc.ENABLED_KEY, enabled as int)
+            JMap.setStr(subcommandMap, ccc.DESCRIPTION_KEY, description)
+            if callbackEvent
+                JMap.setStr(subcommandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
+            endIf
+            if scriptInstance
+                JMap.setForm(subcommandMap, ccc.SCRIPT_INSTANCE_KEY, scriptInstance)
+            endIf
+            if enabled
+                ccc.EnableCommandOrSubcommand(subcommandMap)
+            endIf
+        endIf
+    else
+        ccc.Log("Cannot register subcommand '" + subcommand + "' for non-existent command: " + command)
+    endIf
 endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Update Commands + Subcommands
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; function UpdateCommand(string command, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "")
+; function UpdateSubcommand(string command, string subcommand, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Arguments
@@ -53,7 +104,7 @@ endFunction
 
 function AddFlag(string name, string command = "", string subcommand = "", string short = "") global
     __console_commands__ ccc = __console_commands__.GetInstance()
-    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
+    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapForName(command, subcommand)
     int flagsMap = JMap.getObj(commandOrSubcommandMap, "flags")
 
     int flagMap = JMap.object()
@@ -73,7 +124,7 @@ endFunction
 
 function AddOption(string type, string name, string command = "", string subcommand = "", string short = "") global
     __console_commands__ ccc = __console_commands__.GetInstance()
-    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapID(command, subcommand)
+    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapForName(command, subcommand)
     int optionsMap = JMap.getObj(commandOrSubcommandMap, ccc.OPTIONS_KEY)
     int optionMap = JMap.object()
     JMap.setStr(optionMap, ccc.FLAG_OPTION_TYPE_KEY, ccc.OPTION_TYPE)
@@ -161,33 +212,4 @@ string function ParseResult_GetStringOption(int parseResult, string option, stri
     __console_commands__ ccc = __console_commands__.GetInstance()
     int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
     return JMap.getStr(optionsMap, option, default)
-endFunction
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-;;; TODO
-;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;; ;;;;;
-
-bool function IsListeningForCommands() global
-endFunction
-
-function ListenForCommands() global
 endFunction
