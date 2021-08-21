@@ -130,7 +130,7 @@ endEvent
 
 ; Configure logging to Console/Notifications/Papyrus Log
 function ConfigureLogging()
-    DebugToConsole = false ; TODO ** Turn this OFF for public release **
+    DebugToConsole = true ; TODO ** Turn this OFF for public release **
     DebugToPapyrus = true
     DebugToNotifications = false
     LogToConsole = true
@@ -144,6 +144,10 @@ endFunction
 
 ; Setup the JContainer JMap which stores *all* information about commands.
 function SetupCommandsDataRepository()
+    if _data != 0
+        return
+    endIf
+
     _data = JMap.object()
     JValue.retain(_data)
 
@@ -178,8 +182,11 @@ int function GetMap_CommandIdsToMaps()
     return _commandIdToObjectMap
 endFunction
 
+;; TODO helpers which only return ENABLED commands / subcommands :)
+
 ; Helper to get command map object for command with provided name (or returns 0)
 int function GetCommandMapForCommandName(string command)
+    Debug("Looking for command " + command)
     return JMap.getObj(GetMap_CommandNamesToMaps(), command)
 endFunction
 
@@ -232,6 +239,7 @@ int function CreateAndRegisterNewCommandMap()
     JMap.setObj(commandMap, SUBCOMMANDS_KEY, JMap.object())
     JMap.setObj(commandMap, FLAGS_KEY, JMap.object())
     JMap.setObj(commandMap, OPTIONS_KEY, JMap.object())
+    JMap.setInt(commandMap, ENABLED_KEY, 1) ; Enabled by default unless disabled
     JIntMap.setObj(GetMap_CommandIdsToMaps(), commandMap, commandMap) ; Add it to the ID map which retains everything
     return commandMap
 endFunction
@@ -247,6 +255,7 @@ int function CreateAndRegisterNewSubcommand(int commandMap, string subcommand)
 endfunction
 
 function EnableCommandOrSubcommand(int id)
+    Debug("Enable command or subcommand " + JMap.getStr(id, NAME_KEY))
     JArray.addObj(_enabledCommandAndSubcommandIdsArray, id)
     StartOrStopListeningForCommandsBasedOnEnabledCommands()
 endFunction
@@ -298,14 +307,25 @@ string function GetCommandNameForScript(ConsoleCommand scriptInstance)
     string nameOfScript = StringUtil.Substring(fullScriptName, 1, space - 1)
     int commandWord = StringUtil.Find(nameOfScript, "Command")
     if commandWord > -1 && commandWord != 0
-        string commandName = StringUtil.Substring(nameOfScript, 0, commandWord - 1)
+        string commandName = StringUtil.Substring(nameOfScript, 0, commandWord)
         return commandName
     endIf
     return ""
 endFunction
 
 function SetupNewCommandAndItsSubcommands(int commandMap)
-
+    bool commandIsEnabled = JMap.getInt(commandMap, ENABLED_KEY)
+    if commandIsEnabled
+        int subcommandsMap = JMap.getObj(commandMap, SUBCOMMANDS_KEY)
+        string[] subcommandNames = JMap.allKeysPArray(subcommandsMap)
+        int index = 0
+        while index < subcommandNames.Length
+            ; int subcommand ....
+            EnableCommandOrSubcommand(JMap.getObj(subcommandsMap, subcommandNames[index]))
+            index += 1
+        endWhile
+        EnableCommandOrSubcommand(commandMap)
+    endIf
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -375,7 +395,7 @@ function SendCommandModEvent(string modEventName, int parseResult)
 endFunction
 
 function InvokeCommandOnScriptInstance(ConsoleCommand scriptInstance, int parseResult)
-    Debug.MessageBox("TODO INVOKE COMMAND")
+    scriptInstance.OnCommandResult(parseResult)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -421,6 +441,9 @@ endFunction
 
 int function Parse(string commandText, bool commandOnly = false)
     Debug("Parse: " + commandText)
+
+    Debug("All Names: " + JMap.allKeysPArray(GetMap_CommandNamesToMaps()))
+
     int result = JMap.object()  
     int flagsArray = JArray.object()
     int optionsMap = JMap.object()  

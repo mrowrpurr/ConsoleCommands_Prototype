@@ -88,10 +88,15 @@ endFunction
 ;
 ; This is optional if you name your ConsoleCommand "HelloCommand"
 function Name(string name)
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.Debug("Setting name of command to " + name + " for " + self + "( in map " + ccc.GetMap_CommandNamesToMaps() + ")")
+    JMap.setStr(_commandId, ccc.NAME_KEY, name)
+    JMap.setObj(ccc.GetMap_CommandNamesToMaps(), name, _commandId)
 endFunction
 
-; Returns the 
 string function GetName()
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    return JMap.getStr(_commandId, ccc.NAME_KEY)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -101,6 +106,7 @@ endFunction
 ; If you override this, you must call parent.OnInit()
 event OnInit()
     __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.Debug("OnInit " + self)
     _commandId = ccc.CreateAndRegisterNewCommandMap()
 
     Setup()
@@ -121,6 +127,7 @@ event OnInit()
         ; Unless they explicitly called Disable() in one of the setup functions
         if _enabled
             ccc.SetupNewCommandAndItsSubcommands(_commandId)
+            ccc.Debug("New command setup: " + commandName)
         endIf
     else
         ccc.Log("Command name could not be deterined for script: " + self)
