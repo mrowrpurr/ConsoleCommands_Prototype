@@ -2,6 +2,28 @@ scriptName __console_commands__ extends Quest hidden
 {Private Quest script for persisting global data for Custom Console Commands}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Script Storage
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; 2,048 Possible Available Commands
+ConsoleCommand[] CommandScripts0
+ConsoleCommand[] CommandScripts1
+ConsoleCommand[] CommandScripts2
+ConsoleCommand[] CommandScripts3
+ConsoleCommand[] CommandScripts4
+ConsoleCommand[] CommandScripts5
+ConsoleCommand[] CommandScripts6
+ConsoleCommand[] CommandScripts7
+ConsoleCommand[] CommandScripts8
+ConsoleCommand[] CommandScripts9
+ConsoleCommand[] CommandScripts10
+ConsoleCommand[] CommandScripts11
+ConsoleCommand[] CommandScripts12
+ConsoleCommand[] CommandScripts13
+ConsoleCommand[] CommandScripts14
+ConsoleCommand[] CommandScripts15
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Logging
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -75,32 +97,34 @@ int _data
 int _commandNameToObjectMap
 int _commandIdToObjectMap
 int _enabledCommandAndSubcommandIdsArray
+int _availableCommandScriptIdsArray
 
 ; Keys used in maps
-string property NAME_KEY             = "name"            autoReadonly
-string property COMMAND_KEY          = "command"         autoReadonly
-string property COMMANDS_KEY         = "commands"        autoReadonly
-string property COMMAND_NAMES_KEY    = "commandNames"    autoReadonly
-string property ENABLED_COMMANDS_KEY = "enabledCommands" autoReadonly
-string property COMMAND_MAP_KEY      = "commandMap"      autoReadonly
-string property COMMAND_TEXT_KEY     = "text"            autoReadonly
-string property SUBCOMMAND_KEY       = "subcommand"      autoReadonly
-string property SUBCOMMANDS_KEY      = "subcommands"     autoReadonly
-string property FLAGS_KEY            = "flags"           autoReadonly
-string property OPTIONS_KEY          = "options"         autoReadonly
-string property ARGUMENTS_KEY        = "arguments"       autoReadonly
-string property CALLBACK_EVENT_KEY   = "callback"        autoReadonly
-string property SCRIPT_INSTANCE_KEY  = "script"          autoReadonly
-string property DESCRIPTION_KEY      = "description"     autoReadonly
-string property SHORT_NAME_KEY       = "short"           autoReadonly
-string property FLAG_OPTION_TYPE_KEY = "type"            autoReadonly
-string property ENABLED_KEY          = "enabled"         autoReadonly
-string property FLAG_TYPE            = "flag"            autoReadonly
-string property OPTION_TYPE          = "option"          autoReadonly
-string property OPTION_TYPE_KEY      = "optionType"      autoReadonly
-string property FLOAT_TYPE           = "float"           autoReadonly
-string property INT_TYPE             = "int"             autoReadonly
-string property STRING_TYPE          = "string"          autoReadonly
+string property NAME_KEY                 = "name"             autoReadonly
+string property COMMAND_KEY              = "command"          autoReadonly
+string property COMMANDS_KEY             = "commands"         autoReadonly
+string property COMMAND_NAMES_KEY        = "commandNames"     autoReadonly
+string property ENABLED_COMMANDS_KEY     = "enabledCommands"  autoReadonly
+string property COMMAND_MAP_KEY          = "commandMap"       autoReadonly
+string property COMMAND_TEXT_KEY         = "text"             autoReadonly
+string property SUBCOMMAND_KEY           = "subcommand"       autoReadonly
+string property SUBCOMMANDS_KEY          = "subcommands"      autoReadonly
+string property FLAGS_KEY                = "flags"            autoReadonly
+string property OPTIONS_KEY              = "options"          autoReadonly
+string property ARGUMENTS_KEY            = "arguments"        autoReadonly
+string property CALLBACK_EVENT_KEY       = "callback"         autoReadonly
+string property SCRIPT_INSTANCE_KEY      = "script"           autoReadonly
+string property AVAILABLE_SCRIPT_INDEXES = "availableScripts" autoReadonly
+string property DESCRIPTION_KEY          = "description"      autoReadonly
+string property SHORT_NAME_KEY           = "short"            autoReadonly
+string property FLAG_OPTION_TYPE_KEY     = "type"             autoReadonly
+string property ENABLED_KEY              = "enabled"          autoReadonly
+string property FLAG_TYPE                = "flag"             autoReadonly
+string property OPTION_TYPE              = "option"           autoReadonly
+string property OPTION_TYPE_KEY          = "optionType"       autoReadonly
+string property FLOAT_TYPE               = "float"            autoReadonly
+string property INT_TYPE                 = "int"              autoReadonly
+string property STRING_TYPE              = "string"           autoReadonly
 
 ; Console Helper integration
 string CONSOLE_HELPER_EVENT_NAME  = "ConsoleCommandsEvent_INTERNAL"
@@ -130,7 +154,7 @@ endEvent
 
 ; Configure logging to Console/Notifications/Papyrus Log
 function ConfigureLogging()
-    DebugToConsole = true ; TODO ** Turn this OFF for public release **
+    DebugToConsole = false ; TODO ** Turn this OFF for public release **
     DebugToPapyrus = true
     DebugToNotifications = false
     LogToConsole = true
@@ -154,10 +178,42 @@ function SetupCommandsDataRepository()
     _commandNameToObjectMap = JMap.object()
     _commandIdToObjectMap = JIntMap.object()
     _enabledCommandAndSubcommandIdsArray = JArray.object()
+    _availableCommandScriptIdsArray = JArray.object()
 
     JMap.setObj(_data, COMMANDS_KEY, _commandIdToObjectMap)
     JMap.setObj(_data, COMMAND_NAMES_KEY, _commandNameToObjectMap)
     JMap.setObj(_data, ENABLED_COMMANDS_KEY, _enabledCommandAndSubcommandIdsArray)
+    JMap.setObj(_data, AVAILABLE_SCRIPT_INDEXES, _availableCommandScriptIdsArray)
+
+    SetupCommandScriptArrays()
+endFunction
+
+function SetupCommandScriptArrays()
+    CommandScripts0 = new ConsoleCommand[128]
+    CommandScripts1 = new ConsoleCommand[128]
+    CommandScripts2 = new ConsoleCommand[128]
+    CommandScripts3 = new ConsoleCommand[128]
+    CommandScripts4 = new ConsoleCommand[128]
+    CommandScripts5 = new ConsoleCommand[128]
+    CommandScripts6 = new ConsoleCommand[128]
+    CommandScripts7 = new ConsoleCommand[128]
+    CommandScripts8 = new ConsoleCommand[128]
+    CommandScripts9 = new ConsoleCommand[128]
+    CommandScripts10 = new ConsoleCommand[128]
+    CommandScripts11 = new ConsoleCommand[128]
+    CommandScripts12 = new ConsoleCommand[128]
+    CommandScripts13 = new ConsoleCommand[128]
+    CommandScripts14 = new ConsoleCommand[128]
+    CommandScripts15 = new ConsoleCommand[128]
+    int i = 0
+    while i < 16
+        int j = 0
+        while j < 128
+            JArray.addInt(_availableCommandScriptIdsArray, i * j)
+            j += 1
+        endWhile
+        i += 1
+    endWhile
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -265,6 +321,110 @@ function DisableCommandOrSubcommand(int id)
     StartOrStopListeningForCommandsBasedOnEnabledCommands()
 endFunction
 
+function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptInstance)
+    int count = JArray.count(_availableCommandScriptIdsArray)
+    if count == 0
+        Log("You have hit the maximum available 2,048 registered ConsoleCommand scripts, you cannot register any more")
+        return
+    endIf
+
+    ; Pick a random available one to help prevent pileups
+    int availableIndex = Utility.RandomInt(0, count - 1)
+    int nextAvailableFreeIndex = JArray.getInt(_availableCommandScriptIdsArray, availableIndex)
+    JMap.setInt(id, SCRIPT_INSTANCE_KEY, nextAvailableFreeIndex)
+    JArray.eraseInteger(_availableCommandScriptIdsArray, nextAvailableFreeIndex) ; I hate asking this to search 2,048 values but... there's no atomic pop() :'(
+
+    int arrayNumber = nextAvailableFreeIndex / 128
+    int arrayIndex = nextAvailableFreeIndex
+    if arrayNumber > 0
+        arrayIndex = nextAvailableFreeIndex % arrayNumber
+    endIf
+
+    Debug("Putting " + scriptInstance + " into array " + arrayNumber + " spot " + arrayIndex)
+
+    if arrayNumber == 0
+        CommandScripts0[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 1
+        CommandScripts1[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 2
+        CommandScripts2[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 3
+        CommandScripts3[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 4
+        CommandScripts4[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 5
+        CommandScripts5[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 6
+        CommandScripts6[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 7
+        CommandScripts7[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 8
+        CommandScripts8[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 9
+        CommandScripts9[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 10
+        CommandScripts10[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 11
+        CommandScripts11[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 12
+        CommandScripts12[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 13
+        CommandScripts13[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 14
+        CommandScripts14[arrayIndex] = scriptInstance
+    elseIf arrayNumber == 15
+        CommandScripts15[arrayIndex] = scriptInstance
+    endIf
+endFunction
+
+ConsoleCommand function GetScriptInstanceForCommandOrSubcommand(int id)
+    return GetScriptInstance(JMap.getInt(id, SCRIPT_INSTANCE_KEY))
+endFunction
+
+ConsoleCommand function GetScriptInstance(int instanceNumber)
+    int arrayNumber = instanceNumber / 128
+    int arrayIndex = instanceNumber
+    if arrayNumber > 0
+        arrayIndex = instanceNumber % arrayNumber
+    endIf
+
+    Debug("Getting script from array " + arrayNumber + " spot " + arrayIndex)
+
+    if arrayNumber == 0
+        return CommandScripts0[arrayIndex]
+    elseIf arrayNumber == 1
+        return CommandScripts1[arrayIndex]
+    elseIf arrayNumber == 2
+        return CommandScripts2[arrayIndex]
+    elseIf arrayNumber == 3
+        return CommandScripts3[arrayIndex]
+    elseIf arrayNumber == 4
+        return CommandScripts4[arrayIndex]
+    elseIf arrayNumber == 5
+        return CommandScripts5[arrayIndex]
+    elseIf arrayNumber == 6
+        return CommandScripts6[arrayIndex]
+    elseIf arrayNumber == 7
+        return CommandScripts7[arrayIndex]
+    elseIf arrayNumber == 8
+        return CommandScripts8[arrayIndex]
+    elseIf arrayNumber == 9
+        return CommandScripts9[arrayIndex]
+    elseIf arrayNumber == 10
+        return CommandScripts10[arrayIndex]
+    elseIf arrayNumber == 11
+        return CommandScripts11[arrayIndex]
+    elseIf arrayNumber == 12
+        return CommandScripts12[arrayIndex]
+    elseIf arrayNumber == 13
+        return CommandScripts13[arrayIndex]
+    elseIf arrayNumber == 14
+        return CommandScripts14[arrayIndex]
+    elseIf arrayNumber == 15
+        return CommandScripts15[arrayIndex]
+    endIf
+endFunction
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Start/Stop Listening for Custom Console Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -355,9 +515,14 @@ event OnConsoleCommand(string skseEventName, string commandText, float _, Form s
             UI.InvokeString(ConsoleHelper.GetMenuName(), ConsoleHelper.GetInstanceTarget("AddHistory"), commandText)
             UI.InvokeString(ConsoleHelper.GetMenuName(), ConsoleHelper.GetInstanceTarget("Commands.push"), commandText)
         else
-            ; Check for a script to invoke instead?
-            Debug("No event name for command: " + commandText)
-            ExecuteCommand(commandText)
+            ;
+            ConsoleCommand cmd = GetScriptInstanceForCommandOrSubcommand(command)
+            if cmd
+                InvokeCommand(result)
+            else
+                ; Check for a script to invoke instead?
+                ExecuteCommand(commandText)
+            endIf
         endIf
     else
         ExecuteCommand(commandText)
@@ -368,11 +533,13 @@ endEvent
 function InvokeCommand(int parseResult)
     Debug("Invoke command: " + JMap.getStr(parseResult, COMMAND_TEXT_KEY))
     int command = ParseResult_CommandMap(parseResult)
+    Debug("Command to invoke: " + command)
     int subcommand = ParseResult_SubcommandMap(parseResult)
     string commandSkseEvent = JMap.getStr(command, CALLBACK_EVENT_KEY)    
     string subcommandSkseEvent = JMap.getStr(subcommand, CALLBACK_EVENT_KEY)    
-    ConsoleCommand commandScriptInstance = JMap.getForm(command, SCRIPT_INSTANCE_KEY) as ConsoleCommand
-    ConsoleCommand subcommandScriptInstance = JMap.getForm(subcommand, SCRIPT_INSTANCE_KEY) as ConsoleCommand
+    ConsoleCommand commandScriptInstance = GetScriptInstanceForCommandOrSubcommand(command)
+    ConsoleCommand subcommandScriptInstance = GetScriptInstanceForCommandOrSubcommand(subcommand)
+    Debug("Command script: " + commandScriptInstance)
     if commandSkseEvent
         SendCommandModEvent(commandSkseEvent, parseResult)
     endIf
@@ -442,7 +609,13 @@ endFunction
 int function Parse(string commandText, bool commandOnly = false)
     Debug("Parse: " + commandText)
 
-    Debug("All Names: " + JMap.allKeysPArray(GetMap_CommandNamesToMaps()))
+    string[] names = JMap.allKeysPArray(GetMap_CommandNamesToMaps())
+    Debug("All Names: " + names)
+    int i
+    while i < names.Length
+        Debug("- " + names[i] + " => " + JMap.getObj(GetMap_CommandNamesToMaps(), names[i]) + " ---> " + JMap.getForm(JMap.getObj(GetMap_CommandNamesToMaps(), names[i]), SCRIPT_INSTANCE_KEY))
+        i += 1
+    endWhile
 
     int result = JMap.object()  
     int flagsArray = JArray.object()
@@ -461,7 +634,7 @@ int function Parse(string commandText, bool commandOnly = false)
     if ! commandMap
         return result
     else
-        Debug("Parse: found command " + command)
+        Debug("Parse: found command " + command + " " + commandMap)
         JMap.setObj(result, COMMAND_MAP_KEY, commandMap)
         JMap.setStr(result, "command", command)
         if commandOnly

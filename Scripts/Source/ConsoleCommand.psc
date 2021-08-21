@@ -108,6 +108,8 @@ event OnInit()
     __console_commands__ ccc = __console_commands__.GetInstance()
     ccc.Debug("OnInit " + self)
     _commandId = ccc.CreateAndRegisterNewCommandMap()
+    ccc.Debug("Adding script " + self + " to " + _commandId)
+    ccc.AddScriptInstanceForCommandOrSubcommand(_commandId, self)
 
     Setup()
     Info()
@@ -190,7 +192,8 @@ event OnCommandResult(int parseResult)
     _mostRecentArguments = ConsoleCommands.ParseResult_Arguments(parseResult)
     _mostRecentCommandText = ConsoleCommands.ParseResult_CommandText(parseResult)
 
-    OnCommand()
+    ccc.Debug("Invoking OnCommand()")
+    self.OnCommand()
 
     JValue.release(parseResult)
 endEvent
