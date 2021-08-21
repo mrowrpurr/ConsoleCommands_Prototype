@@ -61,6 +61,7 @@ string property FLAGS_KEY            = "flags"       autoReadonly
 string property OPTIONS_KEY          = "options"     autoReadonly
 string property ARGUMENTS_KEY        = "arguments"   autoReadonly
 string property CALLBACK_EVENT_KEY   = "callback"    autoReadonly
+string property SCRIPT_INSTANCE_KEY  = "script"      autoReadonly
 string property DESCRIPTION_KEY      = "description" autoReadonly
 string property SHORT_NAME_KEY       = "short"       autoReadonly
 string property FLAG_OPTION_TYPE_KEY = "type"        autoReadonly
@@ -72,20 +73,29 @@ string property INT_TYPE             = "int"         autoReadonly
 string property STRING_TYPE          = "string"      autoReadonly
 
 ; Console Helper integration
-string CONSOLE_HELPER_EVENT_NAME  = "ConsoleCommand_INTERNAL"
+string CONSOLE_HELPER_EVENT_NAME  = "ConsoleCommandsEvent_INTERNAL"
 string CONSOLE_HELPER_CALLBACK_FN = "OnConsoleCommand" 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mod Initialization
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Called from a variety of places to make sure that the data is setup
+; and ready to store, e.g. for cases when other mods' OnInit
+; loads before ours :)
+function Setup()
+    if CommandsMapID == 0
+        SetupCommandsDataRepository()
+        ConfigureLogging()
+        ListenForCommands()
+    endIf
+endFunction
+
 ; Runs the first time the mod is installed.
 ; See ___console_commands___.OnPlayerLoadGame() for load event handling
 ; after the mod has already been installed.
 event OnInit()
-    ConfigureLogging()
-    SetupCommandsDataRepository()
-    ListenForCommands()
+    Setup()
 endEvent
 
 ; Configure logging to Console/Notifications/Papyrus Log
@@ -185,12 +195,64 @@ event OnConsoleCommand(string skseEventName, string commandText, float _, Form s
         else
             ; Check for a script to invoke instead?
             Debug("No event name for command: " + commandText)
-            ConsoleHelper.ExecuteCommand(commandText)
+            ExecuteCommand(commandText)
         endIf
     else
-        ConsoleHelper.ExecuteCommand(commandText)
+        ExecuteCommand(commandText)
     endIf
 endEvent
+
+; Invokes command given a parse result
+function InvokeCommand(int parseResult)
+    Debug("Invoke command: " + JMap.getStr(parseResult, COMMAND_TEXT_KEY))
+    int command = ParseResult_CommandMap(parseResult)
+    int subcommand = ParseResult_SubcommandMap(parseResult)
+    string commandSkseEvent = JMap.getStr(command, CALLBACK_EVENT_KEY)    
+    string subcommandSkseEvent = JMap.getStr(subcommand, CALLBACK_EVENT_KEY)    
+    ConsoleCommand commandScriptInstance = JMap.getForm(command, SCRIPT_INSTANCE_KEY) as ConsoleCommand
+    ConsoleCommand subcommandScriptInstance = JMap.getForm(subcommand, SCRIPT_INSTANCE_KEY) as ConsoleCommand
+    if commandSkseEvent
+        SendCommandModEvent(commandSkseEvent, parseResult)
+    endIf
+    if subcommandSkseEvent
+        SendCommandModEvent(subcommandSkseEvent, parseResult)
+    endIf
+    if commandScriptInstance
+        InvokeCommandOnScriptInstance(commandScriptInstance, parseResult)
+    endIf
+    if subcommandScriptInstance
+        InvokeCommandOnScriptInstance(subcommandScriptInstance, parseResult)
+    endIf
+endFunction
+
+function SendCommandModEvent(string modEventName, int parseResult)
+    SendModEvent( \
+        eventName = modEventName, \
+        strArg = JMap.getStr(parseResult, COMMAND_TEXT_KEY), \
+        numArg = parseResult)
+endFunction
+
+function InvokeCommandOnScriptInstance(ConsoleCommand scriptInstance, int parseResult)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Command Execution
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Run the provided command.
+; If it is a registered command, it is invoked.
+; If no command is found, the native console command is executed (via ConsoleHelper.ExecuteCommand)
+function ExecuteCommand(string commandText)
+    Debug("ExecuteCommand " + commandText)
+    int parseResult = Parse(commandText)
+    int commandMap = ParseResult_CommandMap(parseResult)
+    if commandMap > 0
+        InvokeCommand(parseResult)
+    else
+        Debug("No command found, running natively: " + commandText)
+        ConsoleHelper.ExecuteCommand(commandText)
+    endIf
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; JContainer Parsing Helper Functions (return objects etc)
@@ -219,7 +281,7 @@ endFunction
 ;; Main Parse() Function
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-int function Parse(string commandText)
+int function Parse(string commandText, bool commandOnly = false)
     Debug("Parse: " + commandText)
     int result = JMap.object()  
     int flagsArray = JArray.object()
@@ -242,6 +304,9 @@ int function Parse(string commandText)
     else
         Debug("Parse: found command " + command)
         JMap.setStr(result, "command", command)
+        if commandOnly
+            return result
+        endIf
     endIf
     int subcommandsMap = JMap.getObj(commandMap, SUBCOMMANDS_KEY)
 
@@ -335,61 +400,3 @@ function AddCommandOrSubcommandFlagsAndOptionsToMap(int flagsAndOptions, int com
         index += 1
     endWhile
 endFunction
-
-; ; This is what determines which command should be run
-; string[] RegisteredCommandPrefixes
-
-; ; This gets the full display name of the command being run
-; string[] RegisteredCommandNames
-
-; ; List of the ConsoleCommand instances which should be invoked when a command is run
-; Form[] RegisteredConsoleCommands
-
-
-
-
-; event OnConsoleCommand(string eventName, string commandText, float _, Form sender)
-;     int commandIndex = FindCommandIndex(commandText)
-;     if commandIndex > -1
-;         string commandName = RegisteredCommandNames[commandIndex]
-;         ConsoleCommand command = RegisteredConsoleCommands[commandIndex] as ConsoleCommand
-;         command.OnCommand(commandName, "", None) ; arguments and subcommand later
-;     else
-;         ConsoleHelper.ExecuteCommand(commandText)
-;     endIf
-; endEvent
-
-; int function FindCommandIndex(string commandText)
-;     int commandLength = StringUtil.GetLength(commandText)
-;     int index = 0
-;     while index < RegisteredCommandPrefixes.Length
-;         string prefix = RegisteredCommandPrefixes[index]
-;         int prefixIndex = StringUtil.Find(commandText, prefix)
-;         if prefixIndex > -1
-;             if StringUtil.GetLength(prefix) == commandLength || StringUtil.Find(commandText, prefix + " ") == 0
-;                 return index
-;             endIf
-;         endIf
-;         index += 1
-;     endWhile
-;     return -1
-; endFunction
-
-; function RegisterCommandPrefix(ConsoleCommand command, string commandName, string prefix)
-;     if RegisteredCommandPrefixes
-;         RegisteredCommandPrefixes = Utility.ResizeStringArray(RegisteredCommandPrefixes, RegisteredCommandPrefixes.Length + 1)
-;         RegisteredCommandNames = Utility.ResizeStringArray(RegisteredCommandNames, RegisteredCommandNames.Length + 1)
-;         RegisteredConsoleCommands = Utility.ResizeFormArray(RegisteredConsoleCommands, RegisteredConsoleCommands.Length + 1)
-;     else
-;         ; Initialize arrays
-;         RegisteredCommandPrefixes = new string[1]
-;         RegisteredCommandNames = new string[1]
-;         RegisteredConsoleCommands = new Form[1]
-;     endIf
-
-;     RegisteredCommandPrefixes[RegisteredCommandPrefixes.Length - 1] = prefix
-;     RegisteredCommandNames[RegisteredCommandNames.Length - 1] = commandName
-;     RegisteredConsoleCommands[RegisteredConsoleCommands.Length - 1] = command
-
-;     ; Start listening if there were previously no commands!
-; endFunction

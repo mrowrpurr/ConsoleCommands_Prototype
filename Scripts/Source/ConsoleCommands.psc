@@ -22,6 +22,7 @@ endFunction
 
 function RegisterCommand(string command, string description = "", string defaultSubcommand = "", float version = 1.0, bool helpSubcommand = true, bool versionSubcommand = true, ConsoleCommand commandInstance = None, string callbackEvent = "") global
     __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.Setup()
     int commandMap = ccc.GetNewCommandMapID(command) 
     JMap.setStr(commandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
 endFunction
@@ -36,6 +37,14 @@ function RegisterSubcommand(string command, string subcommand, string descriptio
     JMap.setObj(subcommandMap, ccc.FLAGS_KEY, JMap.object())
     JMap.setObj(subcommandMap, ccc.OPTIONS_KEY, JMap.object())
     JMap.setObj(subcommandsMap, subcommand, subcommandMap)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Arguments
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+string[] function GetArguments(string commandText) global
+    return ParseResult_Arguments(Parse(commandText))
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,6 +114,10 @@ endFunction
 ;; Simple Parsing Helper Functions (return strings etc)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+int function Parse(string commandText) global
+    return __console_commands__.GetInstance().Parse(commandText)
+endFunction
+
 string function ParseResult_Command(int parseResult) global
     __console_commands__ ccc = __console_commands__.GetInstance()
     return JMap.getStr(parseResult, ccc.COMMAND_KEY)
@@ -113,6 +126,17 @@ endFunction
 string function ParseResult_Subcommand(int parseResult) global
     __console_commands__ ccc = __console_commands__.GetInstance()
     return JMap.getStr(parseResult, ccc.SUBCOMMAND_KEY)
+endFunction
+
+string[] function ParseResult_Arguments(int parseResult) global
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    int argsArray = JMap.getObj(parseResult, ccc.ARGUMENTS_KEY)
+    return JArray.asStringArray(argsArray)
+endFunction
+
+string function ParseResult_CommandText(int parseResult) global
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    return JMap.getStr(parseResult, ccc.COMMAND_TEXT_KEY)
 endFunction
 
 bool function ParseResult_HasFlag(int parseResult, string flag) global
@@ -139,9 +163,7 @@ string function ParseResult_GetStringOption(int parseResult, string option, stri
     return JMap.getStr(optionsMap, option, default)
 endFunction
 
-int function Parse(string commandText) global
-    return __console_commands__.GetInstance().Parse(commandText)
-endFunction
+
 
 
 
