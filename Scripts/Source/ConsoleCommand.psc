@@ -242,6 +242,17 @@ float function GetOptionFloat(string option, float default = 0.0)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Console Execute Command Helper
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Executes a console command.
+; Is the target command is a ConsoleCommand, it will be run.
+; Otherwise, a native Skyrim console command will be executed.
+function ExecuteCommand(string command)
+    ConsoleCommands.ExecuteCommand(command)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Console Print Helper
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

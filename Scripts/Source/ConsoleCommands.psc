@@ -17,6 +17,18 @@ float function GetCurrentVersion() global
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Execute Command Helper
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Executes a console command.
+; Is the target command is a ConsoleCommand, it will be run.
+; Otherwise, a native Skyrim console command will be executed.
+function ExecuteCommand(string command) global
+    __console_commands__ ccc = __console_commands__.GetInstance()
+    ccc.ExecuteCommand(command)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Start or Stop Listening for Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

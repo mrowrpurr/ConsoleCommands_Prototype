@@ -489,6 +489,25 @@ function SetupNewCommandAndItsSubcommands(int commandMap)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Command Execution
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Run the provided command.
+; If it is a registered command, it is invoked.
+; If no command is found, the native console command is executed (via ConsoleHelper.ExecuteCommand)
+function ExecuteCommand(string commandText)
+    Debug("ExecuteCommand " + commandText)
+    int parseResult = Parse(commandText)
+    int commandMap = ParseResult_CommandMap(parseResult)
+    if commandMap > 0
+        InvokeCommand(parseResult)
+    else
+        Debug("No command found, running natively: " + commandText)
+        ConsoleHelper.ExecuteCommand(commandText)
+    endIf
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Command Processing
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -496,37 +515,7 @@ endFunction
 ; this handles *all* of the commands which are sent to the console.
 event OnConsoleCommand(string skseEventName, string commandText, float _, Form sender)
     Debug("OnConsoleCommand " + commandText)
-    int result = Parse(commandText)
-    int command = ParseResult_CommandMap(result)
-    if command
-        Debug("OnConsoleCommand command: " + ConsoleCommands.ParseResult_Command(result))
-        string eventName = JMap.getStr(command, CALLBACK_EVENT_KEY)
-        int subcommand = ParseResult_SubcommandMap(result)
-        if subcommand
-            Debug("OnConsoleCommand subcommand: " + ConsoleCommands.ParseResult_Subcommand(result))
-            string subcommandEventName = JMap.getStr(subcommand, CALLBACK_EVENT_KEY)
-            if subcommandEventName
-                eventName = subcommandEventName
-            endIf
-        endIf
-        if eventName
-            SendModEvent(eventName, commandText, 0.0)
-            ; Pending Commands array support in ConsoleHelper
-            UI.InvokeString(ConsoleHelper.GetMenuName(), ConsoleHelper.GetInstanceTarget("AddHistory"), commandText)
-            UI.InvokeString(ConsoleHelper.GetMenuName(), ConsoleHelper.GetInstanceTarget("Commands.push"), commandText)
-        else
-            ;
-            ConsoleCommand cmd = GetScriptInstanceForCommandOrSubcommand(command)
-            if cmd
-                InvokeCommand(result)
-            else
-                ; Check for a script to invoke instead?
-                ExecuteCommand(commandText)
-            endIf
-        endIf
-    else
-        ExecuteCommand(commandText)
-    endIf
+    ExecuteCommand(commandText)
 endEvent
 
 ; Invokes command given a parse result
@@ -539,7 +528,6 @@ function InvokeCommand(int parseResult)
     string subcommandSkseEvent = JMap.getStr(subcommand, CALLBACK_EVENT_KEY)    
     ConsoleCommand commandScriptInstance = GetScriptInstanceForCommandOrSubcommand(command)
     ConsoleCommand subcommandScriptInstance = GetScriptInstanceForCommandOrSubcommand(subcommand)
-    Debug("Command script: " + commandScriptInstance)
     if commandSkseEvent
         SendCommandModEvent(commandSkseEvent, parseResult)
     endIf
@@ -563,25 +551,6 @@ endFunction
 
 function InvokeCommandOnScriptInstance(ConsoleCommand scriptInstance, int parseResult)
     scriptInstance.OnCommandResult(parseResult)
-endFunction
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Command Execution
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Run the provided command.
-; If it is a registered command, it is invoked.
-; If no command is found, the native console command is executed (via ConsoleHelper.ExecuteCommand)
-function ExecuteCommand(string commandText)
-    Debug("ExecuteCommand " + commandText)
-    int parseResult = Parse(commandText)
-    int commandMap = ParseResult_CommandMap(parseResult)
-    if commandMap > 0
-        InvokeCommand(parseResult)
-    else
-        Debug("No command found, running natively: " + commandText)
-        ConsoleHelper.ExecuteCommand(commandText)
-    endIf
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
