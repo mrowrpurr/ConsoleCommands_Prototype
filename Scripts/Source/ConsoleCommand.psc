@@ -5,7 +5,8 @@ scriptName ConsoleCommand extends Quest hidden
 ;; Private Fields
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-int      _mostRecentParseResult
+int      _parseResult
+string   _commandName
 string   _mostRecentCommandName
 string   _mostRecentSubcommandName
 string[] _mostRecentArguments
@@ -48,8 +49,19 @@ string property FullCommandText
 endProperty
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; .......
+;; Command Name
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function Command(string name)
+    ; If this has already been configured, gotta reconfigure it!
+    ; ...
+    ; ...
+    _commandName = name
+endFunction
+
+string function GetCommandName()
+    return _commandName
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; .......
@@ -87,7 +99,7 @@ event OnCommandResult(int parseResult)
     __console_commands__ ccc = __console_commands__.GetInstance()
     JValue.retain(parseResult)
 
-    _mostRecentParseResult = parseResult
+    _parseResult = parseResult
     _mostRecentCommandName = ConsoleCommands.ParseResult_Command(parseResult)
     _mostRecentSubcommandName = ConsoleCommands.ParseResult_Subcommand(parseResult)
     _mostRecentArguments = ConsoleCommands.ParseResult_Arguments(parseResult)
@@ -103,6 +115,54 @@ endEvent
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Add Flags
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; function Flag(string flag, string command = "", string subcommand = "")
+; endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Flag Getter
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+bool function HasFlag(string flag)
+    return ConsoleCommands.ParseResult_HasFlag(_parseResult, flag)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; .......
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Add Options
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Option Getters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+string function GetOptionString(string option, string default = "")
+    return ConsoleCommands.ParseResult_GetStringOption(_parseResult, option, default)
+endFunction
+
+int function GetOptionInt(string option, int default = 0)
+    return ConsoleCommands.ParseResult_GetIntOption(_parseResult, option, default)
+endFunction
+
+float function GetOptionFloat(string option, float default = 0.0)
+    return ConsoleCommands.ParseResult_GetFloatOption(_parseResult, option, default)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Console Print Helper
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Prints out the provided text to the console
+function Print(string text)
+    ConsoleHelper.Print(text)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; .......
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -114,6 +174,7 @@ endEvent
 ; endFunction
 
 event OnInit()
+    ; SCRIPT NAME ==> COMMAND NAME PARSING LOGIC:
     ; string fullScriptName = self
     ; int space = StringUtil.Find(fullScriptName, " ")
     ; string nameOfScript = StringUtil.Substring(fullScriptName, 1, space - 1)
@@ -124,10 +185,6 @@ event OnInit()
     ;     RegisterForModEvent("TempCallCommand", "OnTempCommandHandler")
     ; endIf
 endEvent
-
-; event OnTempCommandHandler(string eventName, string command, float parseResult, Form sender)
-;     _mostRecentParseResult = parseResult
-; endEvent
 
 ; function Version(float version)
 ; endFunction
@@ -146,17 +203,7 @@ endEvent
 ; function Subcommand(string subcommand, string description = "", string short = "")
 ; endFunction
 
-; Prints out the provided text to the console
-function Print(string text)
-    ConsoleHelper.Print(text)
-endFunction
 
-; function Flag(string name, string description = "", string short = "", string subcommand = "")
-; endFunction
-
-; bool function HasFlag(string flag)
-;     return false
-; endFunction
 
 ; function OptionString(string name, string description = "", string short = "", string subcommand = "", string default = "")
 ; endFunction
