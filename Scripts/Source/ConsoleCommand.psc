@@ -88,15 +88,15 @@ endFunction
 ;
 ; This is optional if you name your ConsoleCommand "HelloCommand"
 function Name(string name)
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.Debug("Setting name of command to " + name + " for " + self + "( in map " + ccc.GetMap_CommandNamesToMaps() + ")")
-    JMap.setStr(_commandId, ccc.NAME_KEY, name)
-    JMap.setObj(ccc.GetMap_CommandNamesToMaps(), name, _commandId)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.Debug("Setting name of command to " + name + " for " + self + "( in map " + cc.GetMap_CommandNamesToMaps() + ")")
+    JMap.setStr(_commandId, cc.NAME_KEY, name)
+    JMap.setObj(cc.GetMap_CommandNamesToMaps(), name, _commandId)
 endFunction
 
 string function GetName()
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    return JMap.getStr(_commandId, ccc.NAME_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    return JMap.getStr(_commandId, cc.NAME_KEY)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,11 +105,13 @@ endFunction
 
 ; If you override this, you must call parent.OnInit()
 event OnInit()
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.Debug("OnInit " + self)
-    _commandId = ccc.CreateAndRegisterNewCommandMap()
-    ccc.Debug("Adding script " + self + " to " + _commandId)
-    ccc.AddScriptInstanceForCommandOrSubcommand(_commandId, self)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.Setup()
+    Utility.Wait(0.1)
+    cc.Debug("OnInit " + self)
+    _commandId = cc.CreateAndRegisterNewCommandMap()
+    cc.Debug("Adding script " + self + " to " + _commandId)
+    cc.AddScriptInstanceForCommandOrSubcommand(_commandId, self)
 
     Setup()
     Info()
@@ -118,7 +120,7 @@ event OnInit()
 
     string commandName = GetName()
     if ! commandName
-        commandName = ccc.GetCommandNameForScript(self)
+        commandName = cc.GetCommandNameForScript(self)
         if commandName
             Name(commandName)
         endIf
@@ -128,11 +130,11 @@ event OnInit()
         ; If there's a name configured, we enable the main command and any default-enabled subcommands and start listening!
         ; Unless they explicitly called Disable() in one of the setup functions
         if _enabled
-            ccc.SetupNewCommandAndItsSubcommands(_commandId)
-            ccc.Debug("New command setup: " + commandName)
+            cc.SetupNewCommandAndItsSubcommands(_commandId)
+            cc.Debug("New command setup: " + commandName)
         endIf
     else
-        ccc.Log("Command name could not be deterined for script: " + self)
+        cc.Log("Command name could not be deterined for script: " + self)
     endIf
 endEvent
 
@@ -142,16 +144,16 @@ endEvent
 
 function Enable()
     _enabled = true
-    ; TODO ccc.EnableCommandAndItsSubcommands()
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.Log("Enable() not yet fully supported")
+    ; TODO cc.EnableCommandAndItsSubcommands()
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.Log("Enable() not yet fully supported")
 endFunction
 
 function Disable()
     _enabled = false
-    ; TODO ccc.DisableCommandAndItsSubcommands()
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.Log("Disable() not yet fully supported")
+    ; TODO cc.DisableCommandAndItsSubcommands()
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.Log("Disable() not yet fully supported")
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -183,7 +185,7 @@ endEvent
 ; Finally, this is responsible for *persisting* the "parseResult"
 ; until OnCommand has completed running.
 event OnCommandResult(int parseResult)
-    __console_commands__ ccc = __console_commands__.GetInstance()
+    __console_commands__ cc = __console_commands__.GetInstance()
     JValue.retain(parseResult)
 
     _parseResult = parseResult
@@ -192,11 +194,45 @@ event OnCommandResult(int parseResult)
     _mostRecentArguments = ConsoleCommands.ParseResult_Arguments(parseResult)
     _mostRecentCommandText = ConsoleCommands.ParseResult_CommandText(parseResult)
 
-    ccc.Debug("Invoking OnCommand()")
+    cc.Debug("Invoking OnCommand() " + _mostRecentCommandText)
     self.OnCommand()
 
     JValue.release(parseResult)
 endEvent
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Storage Setters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Storage a float value for this command using the provided key
+function StoreFloat(string storageKey, float value)
+    ConsoleCommands.Command_StoreFloat(_commandId, storageKey, value)
+endFunction
+
+; Storage a Form value for this command using the provided key
+function StoreForm(string storageKey, Form value)
+    ConsoleCommands.Command_StoreForm(_commandId, storageKey, value)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Storage Getters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+float function GetFloat(string storageKey, float default = 0.0, string command = "")
+    if command
+        return ConsoleCommands.GetFloat(command, storageKey, default)
+    else
+        return ConsoleCommands.Command_GetFloat(_commandId, storageKey, default)
+    endIf
+endFunction
+
+Form function GetForm(string storageKey, Form default = None, string command = "")
+    if command
+        return ConsoleCommands.GetForm(command, storageKey, default)
+    else
+        return ConsoleCommands.Command_GetForm(_commandId, storageKey, default)
+    endIf
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; .......

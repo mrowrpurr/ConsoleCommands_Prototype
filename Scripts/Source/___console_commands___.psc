@@ -13,3 +13,7 @@ endEvent
 ; On Load Game when mod was previously installed
 event OnPlayerLoadGame()
 endEvent
+
+event OnDeath(Actor akKiller)
+    ConsoleHelper.EnableNativeEnterReturnKeyHandling()
+endEvent

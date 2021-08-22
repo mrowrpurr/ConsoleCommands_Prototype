@@ -106,6 +106,7 @@ string property COMMANDS_KEY             = "commands"         autoReadonly
 string property COMMAND_NAMES_KEY        = "commandNames"     autoReadonly
 string property ENABLED_COMMANDS_KEY     = "enabledCommands"  autoReadonly
 string property COMMAND_MAP_KEY          = "commandMap"       autoReadonly
+string property STORAGE_KEY              = "storage"          autoReadonly
 string property COMMAND_TEXT_KEY         = "text"             autoReadonly
 string property SUBCOMMAND_KEY           = "subcommand"       autoReadonly
 string property SUBCOMMANDS_KEY          = "subcommands"      autoReadonly
@@ -296,6 +297,8 @@ int function CreateAndRegisterNewCommandMap()
     JMap.setObj(commandMap, FLAGS_KEY, JMap.object())
     JMap.setObj(commandMap, OPTIONS_KEY, JMap.object())
     JMap.setInt(commandMap, ENABLED_KEY, 1) ; Enabled by default unless disabled
+    JMap.setInt(commandMap, SCRIPT_INSTANCE_KEY, -1) ; No script associated at creation time
+    JMap.setObj(commandMap, STORAGE_KEY, JMap.object())
     JIntMap.setObj(GetMap_CommandIdsToMaps(), commandMap, commandMap) ; Add it to the ID map which retains everything
     return commandMap
 endFunction
@@ -305,6 +308,8 @@ int function CreateAndRegisterNewSubcommand(int commandMap, string subcommand)
     JMap.setStr(subcommandMap, NAME_KEY, subcommand)
     JMap.setObj(subcommandMap, FLAGS_KEY, JMap.object())
     JMap.setObj(subcommandMap, OPTIONS_KEY, JMap.object())
+    JMap.setInt(subcommandMap, ENABLED_KEY, 1) ; Enabled by default unless disabled
+    JMap.setInt(subcommandMap, SCRIPT_INSTANCE_KEY, -1) ; No script associated at creation time
     int subcommandsMap = JMap.getObj(commandMap, SUBCOMMANDS_KEY)
     JMap.setObj(subcommandsMap, subcommand, subcommandMap)
     return subcommandMap
@@ -322,6 +327,8 @@ function DisableCommandOrSubcommand(int id)
 endFunction
 
 function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptInstance)
+    Debug("Add Script Instance for " + JMap.getStr(id, NAME_KEY))
+
     int count = JArray.count(_availableCommandScriptIdsArray)
     if count == 0
         Log("You have hit the maximum available 2,048 registered ConsoleCommand scripts, you cannot register any more")
@@ -330,6 +337,7 @@ function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptIn
 
     ; Pick a random available one to help prevent pileups
     int availableIndex = Utility.RandomInt(0, count - 1)
+    Debug("Selected random script array position " + availableIndex + " (count: " + count + ")")
     int nextAvailableFreeIndex = JArray.getInt(_availableCommandScriptIdsArray, availableIndex)
     JMap.setInt(id, SCRIPT_INSTANCE_KEY, nextAvailableFreeIndex)
     JArray.eraseInteger(_availableCommandScriptIdsArray, nextAvailableFreeIndex) ; I hate asking this to search 2,048 values but... there's no atomic pop() :'(
@@ -378,7 +386,12 @@ function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptIn
 endFunction
 
 ConsoleCommand function GetScriptInstanceForCommandOrSubcommand(int id)
-    return GetScriptInstance(JMap.getInt(id, SCRIPT_INSTANCE_KEY))
+    int scriptPosition = JMap.getInt(id, SCRIPT_INSTANCE_KEY)
+    if scriptPosition > -1
+        return GetScriptInstance(scriptPosition)
+    else
+        return None
+    endIf
 endFunction
 
 ConsoleCommand function GetScriptInstance(int instanceNumber)
@@ -496,6 +509,7 @@ endFunction
 ; If it is a registered command, it is invoked.
 ; If no command is found, the native console command is executed (via ConsoleHelper.ExecuteCommand)
 function ExecuteCommand(string commandText)
+    ConsoleHelper.AddToCommandHistory(commandText)
     Debug("ExecuteCommand " + commandText)
     int parseResult = Parse(commandText)
     int commandMap = ParseResult_CommandMap(parseResult)
@@ -701,4 +715,36 @@ function AddCommandOrSubcommandFlagsAndOptionsToMap(int flagsAndOptions, int com
         endIf
         index += 1
     endWhile
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Storage Helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+int function StorageForCommand(int commandId)
+    return JMap.getObj(commandId, STORAGE_KEY)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Storage Setters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function StoreFloat(int commandId, string storageKey, float value)
+    JMap.setFlt(StorageForCommand(commandId), storageKey, value)
+endFunction
+
+function StoreForm(int commandId, string storageKey, Form value)
+    JMap.setForm(StorageForCommand(commandId), storageKey, value)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Storage Getters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+float function GetFloat(int commandId, string storageKey, float default = 0.0)
+    return JMap.getFlt(StorageForCommand(commandId), storageKey, default)
+endFunction
+
+Form function GetForm(int commandId, string storageKey, Form default = None)
+    return JMap.getForm(StorageForCommand(commandId), storageKey, default)
 endFunction

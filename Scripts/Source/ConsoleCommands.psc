@@ -24,8 +24,8 @@ endFunction
 ; Is the target command is a ConsoleCommand, it will be run.
 ; Otherwise, a native Skyrim console command will be executed.
 function ExecuteCommand(string command) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.ExecuteCommand(command)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.ExecuteCommand(command)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,13 +33,13 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function StartListeningForCommands() global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.ListenForCommands()
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.ListenForCommands()
 endFunction
 
 function StopListeningForCommands() global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    ccc.StopListeningForCommands()
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.StopListeningForCommands()
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,50 +48,50 @@ endFunction
 
 ; Register a command
 function RegisterCommand(string command, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "", bool enabled = true) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    if ccc.CommandExists(command)
-        ccc.Log("Command already registered: " + command)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    if cc.CommandExists(command)
+        cc.Log("Command already registered: " + command)
     else
-        int commandMap = ccc.CreateAndRegisterNewCommandMapForCommandName(command) 
-        JMap.setInt(commandMap, ccc.ENABLED_KEY, enabled as int)
-        JMap.setStr(commandMap, ccc.DESCRIPTION_KEY, description)
+        int commandMap = cc.CreateAndRegisterNewCommandMapForCommandName(command) 
+        JMap.setInt(commandMap, cc.ENABLED_KEY, enabled as int)
+        JMap.setStr(commandMap, cc.DESCRIPTION_KEY, description)
         if callbackEvent
-            JMap.setStr(commandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
+            JMap.setStr(commandMap, cc.CALLBACK_EVENT_KEY, callbackEvent)
         endIf
         if scriptInstance
-            JMap.setForm(commandMap, ccc.SCRIPT_INSTANCE_KEY, scriptInstance)
+            JMap.setForm(commandMap, cc.SCRIPT_INSTANCE_KEY, scriptInstance)
         endIf
         if enabled
-            ccc.EnableCommandOrSubcommand(commandMap)
+            cc.EnableCommandOrSubcommand(commandMap)
         endIf
     endIf
 endFunction
 
 ; Register a subcommand for an existing command
 function RegisterSubcommand(string command, string subcommand, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "", bool enabled = true) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int commandMap = ccc.GetCommandMapForCommandName(command)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int commandMap = cc.GetCommandMapForCommandName(command)
     if commandMap
-        int subcommandsMap = JMap.getObj(commandMap, ccc.SUBCOMMANDS_KEY)
+        int subcommandsMap = JMap.getObj(commandMap, cc.SUBCOMMANDS_KEY)
         int existingSubcommandMap = JMap.getObj(subcommandsMap, subcommand)
         if existingSubcommandMap
-            ccc.Log("Subcommand already registered: " + command + " " + subcommand)
+            cc.Log("Subcommand already registered: " + command + " " + subcommand)
         else
-            int subcommandMap = ccc.CreateAndRegisterNewSubcommand(commandMap, subcommand)
-            JMap.setInt(subcommandMap, ccc.ENABLED_KEY, enabled as int)
-            JMap.setStr(subcommandMap, ccc.DESCRIPTION_KEY, description)
+            int subcommandMap = cc.CreateAndRegisterNewSubcommand(commandMap, subcommand)
+            JMap.setInt(subcommandMap, cc.ENABLED_KEY, enabled as int)
+            JMap.setStr(subcommandMap, cc.DESCRIPTION_KEY, description)
             if callbackEvent
-                JMap.setStr(subcommandMap, ccc.CALLBACK_EVENT_KEY, callbackEvent)
+                JMap.setStr(subcommandMap, cc.CALLBACK_EVENT_KEY, callbackEvent)
             endIf
             if scriptInstance
-                JMap.setForm(subcommandMap, ccc.SCRIPT_INSTANCE_KEY, scriptInstance)
+                JMap.setForm(subcommandMap, cc.SCRIPT_INSTANCE_KEY, scriptInstance)
             endIf
             if enabled
-                ccc.EnableCommandOrSubcommand(subcommandMap)
+                cc.EnableCommandOrSubcommand(subcommandMap)
             endIf
         endIf
     else
-        ccc.Log("Cannot register subcommand '" + subcommand + "' for non-existent command: " + command)
+        cc.Log("Cannot register subcommand '" + subcommand + "' for non-existent command: " + command)
     endIf
 endFunction
 
@@ -115,14 +115,14 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AddFlag(string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapForName(command, subcommand)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int commandOrSubcommandMap = cc.GetCommandOrSubcommandMapForName(command, subcommand)
     int flagsMap = JMap.getObj(commandOrSubcommandMap, "flags")
 
     int flagMap = JMap.object()
-    JMap.setStr(flagMap, ccc.FLAG_OPTION_TYPE_KEY, ccc.FLAG_TYPE)
-    JMap.setStr(flagMap, ccc.NAME_KEY, name)
-    JMap.setStr(flagMap, ccc.SHORT_NAME_KEY, short)
+    JMap.setStr(flagMap, cc.FLAG_OPTION_TYPE_KEY, cc.FLAG_TYPE)
+    JMap.setStr(flagMap, cc.NAME_KEY, name)
+    JMap.setStr(flagMap, cc.SHORT_NAME_KEY, short)
     JMap.setObj(flagsMap, name, flagMap)
 endFunction
 
@@ -135,30 +135,30 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AddOption(string type, string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int commandOrSubcommandMap = ccc.GetCommandOrSubcommandMapForName(command, subcommand)
-    int optionsMap = JMap.getObj(commandOrSubcommandMap, ccc.OPTIONS_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int commandOrSubcommandMap = cc.GetCommandOrSubcommandMapForName(command, subcommand)
+    int optionsMap = JMap.getObj(commandOrSubcommandMap, cc.OPTIONS_KEY)
     int optionMap = JMap.object()
-    JMap.setStr(optionMap, ccc.FLAG_OPTION_TYPE_KEY, ccc.OPTION_TYPE)
-    JMap.setStr(optionMap, ccc.NAME_KEY, name)
-    JMap.setStr(optionMap, ccc.SHORT_NAME_KEY, short)
-    JMap.setStr(optionMap, ccc.OPTION_TYPE_KEY, type)
+    JMap.setStr(optionMap, cc.FLAG_OPTION_TYPE_KEY, cc.OPTION_TYPE)
+    JMap.setStr(optionMap, cc.NAME_KEY, name)
+    JMap.setStr(optionMap, cc.SHORT_NAME_KEY, short)
+    JMap.setStr(optionMap, cc.OPTION_TYPE_KEY, type)
     JMap.setObj(optionsMap, name, optionMap)
 endFunction
 
 function AddFloatOption(string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    AddOption(ccc.FLOAT_TYPE, name, command, subcommand, short)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    AddOption(cc.FLOAT_TYPE, name, command, subcommand, short)
 endFunction
 
 function AddIntOption(string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    AddOption(ccc.INT_TYPE, name, command, subcommand, short)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    AddOption(cc.INT_TYPE, name, command, subcommand, short)
 endFunction
 
 function AddStringOption(string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    AddOption(ccc.STRING_TYPE, name, command, subcommand, short)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    AddOption(cc.STRING_TYPE, name, command, subcommand, short)
 endFunction
 
 float function GetFloatOption(string option, string commandText, float default = 0.0) global
@@ -174,6 +174,56 @@ string function GetStringOption(string option, string commandText, string defaul
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Storage Setters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function Command_StoreFloat(int commandId, string storageKey, float value) global
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.StoreFloat(commandId, storageKey, value)
+endFunction
+
+function Command_StoreForm(int commandId, string storageKey, Form value) global
+    __console_commands__ cc = __console_commands__.GetInstance()
+    cc.StoreForm(commandId, storageKey, value)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Storage Getters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+float function GetFloat(string command, string storageKey, float default = 0.0) global
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int commandMap = cc.GetCommandMapForCommandName(command)
+    if commandMap
+        return Command_GetFloat(commandMap, storageKey, default)
+    else
+        cc.Debug("GetFloat() command not found: " + command)
+        return default
+    endIf
+endFunction
+
+float function Command_GetFloat(int commandId, string storageKey, float default = 0.0) global
+    __console_commands__ cc = __console_commands__.GetInstance()
+    return cc.GetFloat(commandId, storageKey, default)
+endFunction
+
+Form function GetForm(string command, string storageKey, Form default = None) global
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int commandMap = cc.GetCommandMapForCommandName(command)
+    if commandMap
+        return Command_GetForm(commandMap, storageKey, default)
+    else
+        cc.Debug("GetForm() command not found: " + command)
+        return default
+    endIf
+endFunction
+
+Form function Command_GetForm(int commandId, string storageKey, Form default = None) global
+    __console_commands__ cc = __console_commands__.GetInstance()
+    return cc.GetForm(commandId, storageKey, default)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Simple Parsing Helper Functions (return strings etc)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -182,46 +232,46 @@ int function Parse(string commandText) global
 endFunction
 
 string function ParseResult_Command(int parseResult) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    return JMap.getStr(parseResult, ccc.COMMAND_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    return JMap.getStr(parseResult, cc.COMMAND_KEY)
 endFunction
 
 string function ParseResult_Subcommand(int parseResult) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    return JMap.getStr(parseResult, ccc.SUBCOMMAND_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    return JMap.getStr(parseResult, cc.SUBCOMMAND_KEY)
 endFunction
 
 string[] function ParseResult_Arguments(int parseResult) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int argsArray = JMap.getObj(parseResult, ccc.ARGUMENTS_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int argsArray = JMap.getObj(parseResult, cc.ARGUMENTS_KEY)
     return JArray.asStringArray(argsArray)
 endFunction
 
 string function ParseResult_CommandText(int parseResult) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    return JMap.getStr(parseResult, ccc.COMMAND_TEXT_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    return JMap.getStr(parseResult, cc.COMMAND_TEXT_KEY)
 endFunction
 
 bool function ParseResult_HasFlag(int parseResult, string flag) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int flagsArray = JMap.getObj(parseResult, ccc.FLAGS_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int flagsArray = JMap.getObj(parseResult, cc.FLAGS_KEY)
     return JArray.findStr(flagsArray, flag) > -1
 endFunction
 
 float function ParseResult_GetFloatOption(int parseResult, string option, float default = 0.0) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int optionsMap = JMap.getObj(parseResult, cc.OPTIONS_KEY)
     return JMap.getFlt(optionsMap, option, default)
 endFunction
 
 int function ParseResult_GetIntOption(int parseResult, string option, int default = 0) global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int optionsMap = JMap.getObj(parseResult, cc.OPTIONS_KEY)
     return JMap.getInt(optionsMap, option, default)
 endFunction
 
 string function ParseResult_GetStringOption(int parseResult, string option, string default = "") global
-    __console_commands__ ccc = __console_commands__.GetInstance()
-    int optionsMap = JMap.getObj(parseResult, ccc.OPTIONS_KEY)
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int optionsMap = JMap.getObj(parseResult, cc.OPTIONS_KEY)
     return JMap.getStr(optionsMap, option, default)
 endFunction
