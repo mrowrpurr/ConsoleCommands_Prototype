@@ -76,11 +76,15 @@ endFunction
 function Info()
 endFunction
 
-; Recommended function to add your Options and Flags configuration to
+; Optional function to add your Options configuration to (else use Setup() or Info())
 function Options()
 endFunction
 
-; Recommended function to add your Subcommand configuration to
+; Optional function to add your Flags configuration to (else use Setup() or Info())
+function Flags()
+endFunction
+
+; Optional function to add your Subcommand configuration to (else use Setup() or Info())
 function Subcommands()
 endFunction
 
@@ -116,6 +120,7 @@ event OnInit()
     Setup()
     Info()
     Options()
+    Flags()
     Subcommands()
 
     string commandName = GetName()
@@ -242,8 +247,10 @@ endFunction
 ;; Add Flags
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; function Flag(string flag, string command = "", string subcommand = "")
-; endFunction
+function Flag(string flag, string short = "", string description = "", string command = "", string subcommand = "")
+    ; ConsoleCommands.AddFlag(flag, GetName(), subcommand)
+    ConsoleCommands.Command_AddFlag(_commandId, flag, short, description)
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flag Getter

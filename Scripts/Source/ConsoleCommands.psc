@@ -114,10 +114,15 @@ endFunction
 ;; Flags
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-function AddFlag(string name, string command = "", string subcommand = "", string short = "") global
+function AddFlag(string name, string command = "", string subcommand = "", string short = "", string description = "") global
     __console_commands__ cc = __console_commands__.GetInstance()
     int commandOrSubcommandMap = cc.GetCommandOrSubcommandMapForName(command, subcommand)
-    int flagsMap = JMap.getObj(commandOrSubcommandMap, "flags")
+    Command_AddFlag(commandOrSubcommandMap, name, short, description)
+endFunction
+
+function Command_AddFlag(int commandOrSubcommand, string name, string short = "", string description = "") global
+    __console_commands__ cc = __console_commands__.GetInstance()
+    int flagsMap = JMap.getObj(commandOrSubcommand, "flags")
 
     int flagMap = JMap.object()
     JMap.setStr(flagMap, cc.FLAG_OPTION_TYPE_KEY, cc.FLAG_TYPE)
