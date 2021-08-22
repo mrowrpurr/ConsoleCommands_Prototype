@@ -194,7 +194,7 @@ event OnCommandResult(int parseResult)
     _mostRecentArguments = ConsoleCommands.ParseResult_Arguments(parseResult)
     _mostRecentCommandText = ConsoleCommands.ParseResult_CommandText(parseResult)
 
-    cc.Debug("Invoking OnCommand() " + _mostRecentCommandText)
+    cc.Debug("Invoking OnCommand() " + _mostRecentCommandText + " from here in " + _commandId + " (" + self + ")")
     self.OnCommand()
 
     JValue.release(parseResult)

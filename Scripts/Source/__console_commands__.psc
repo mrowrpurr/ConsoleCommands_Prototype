@@ -327,18 +327,33 @@ function DisableCommandOrSubcommand(int id)
 endFunction
 
 function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptInstance)
-    Debug("Add Script Instance for " + JMap.getStr(id, NAME_KEY))
-
-    int count = JArray.count(_availableCommandScriptIdsArray)
-    if count == 0
-        Log("You have hit the maximum available 2,048 registered ConsoleCommand scripts, you cannot register any more")
+    if ! scriptInstance
         return
     endIf
 
-    ; Pick a random available one to help prevent pileups
-    int availableIndex = Utility.RandomInt(0, count - 1)
-    Debug("Selected random script array position " + availableIndex + " (count: " + count + ")")
-    int nextAvailableFreeIndex = JArray.getInt(_availableCommandScriptIdsArray, availableIndex)
+    Debug("Add Script Instance for " + JMap.getStr(id, NAME_KEY))
+
+    int nextAvailableFreeIndex = -1
+    int count = 1
+    while nextAvailableFreeIndex == -1 && count > 0
+        count = JArray.count(_availableCommandScriptIdsArray)
+        if count == 0
+            Log("You have hit the maximum available 2,048 registered ConsoleCommand scripts, you cannot register any more")
+            return
+        endIf
+        ; Pick a random available one to help prevent pileups when a bunch of commands all get registered at once (first mod installation)
+        int availableIndex = Utility.RandomInt(0, count - 1)
+        if availableIndex == 0 && count > 1
+            ; Try it again. This "random" thing likes to choose 0 far too often and that causes problems when many commands register at once.
+        else
+            nextAvailableFreeIndex = JArray.getInt(_availableCommandScriptIdsArray, availableIndex, default = -1)
+            if nextAvailableFreeIndex == 0 && count > 1
+                nextAvailableFreeIndex = -1 ; Try it again. Stop choosing #0! That breaks everything if lots of commands choose zero! Stop it, you crazy code, just stop choosing zero!
+            endIf
+        endIf
+    endWhile
+
+    Debug("Selected random script array position " + nextAvailableFreeIndex + " (count: " + count + ") for " + id + " " + JMap.getStr(id, NAME_KEY) + " " + scriptInstance)
     JMap.setInt(id, SCRIPT_INSTANCE_KEY, nextAvailableFreeIndex)
     JArray.eraseInteger(_availableCommandScriptIdsArray, nextAvailableFreeIndex) ; I hate asking this to search 2,048 values but... there's no atomic pop() :'(
 
@@ -348,7 +363,7 @@ function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptIn
         arrayIndex = nextAvailableFreeIndex % arrayNumber
     endIf
 
-    Debug("Putting " + scriptInstance + " into array " + arrayNumber + " spot " + arrayIndex)
+    Debug("Putting " + scriptInstance + " into #" + nextAvailableFreeIndex + " array " + arrayNumber + " spot " + arrayIndex)
 
     if arrayNumber == 0
         CommandScripts0[arrayIndex] = scriptInstance
@@ -386,7 +401,11 @@ function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptIn
 endFunction
 
 ConsoleCommand function GetScriptInstanceForCommandOrSubcommand(int id)
+    if id == 0
+        return None
+    endIf
     int scriptPosition = JMap.getInt(id, SCRIPT_INSTANCE_KEY)
+    Debug("Script Position for " + id + " (" + JMap.getStr(id, NAME_KEY) + ") is " + scriptPosition)
     if scriptPosition > -1
         return GetScriptInstance(scriptPosition)
     else
@@ -401,7 +420,7 @@ ConsoleCommand function GetScriptInstance(int instanceNumber)
         arrayIndex = instanceNumber % arrayNumber
     endIf
 
-    Debug("Getting script from array " + arrayNumber + " spot " + arrayIndex)
+    Debug("Getting script #" + instanceNumber + " from array " + arrayNumber + " spot " + arrayIndex)
 
     if arrayNumber == 0
         return CommandScripts0[arrayIndex]
@@ -509,7 +528,6 @@ endFunction
 ; If it is a registered command, it is invoked.
 ; If no command is found, the native console command is executed (via ConsoleHelper.ExecuteCommand)
 function ExecuteCommand(string commandText)
-    ConsoleHelper.AddToCommandHistory(commandText)
     Debug("ExecuteCommand " + commandText)
     int parseResult = Parse(commandText)
     int commandMap = ParseResult_CommandMap(parseResult)
@@ -517,6 +535,8 @@ function ExecuteCommand(string commandText)
         InvokeCommand(parseResult)
     else
         Debug("No command found, running natively: " + commandText)
+        ConsoleHelper.AddToCommandHistory(commandText)
+        ConsoleHelper.Print(commandText)
         ConsoleHelper.ExecuteCommand(commandText)
     endIf
 endFunction
@@ -534,14 +554,21 @@ endEvent
 
 ; Invokes command given a parse result
 function InvokeCommand(int parseResult)
-    Debug("Invoke command: " + JMap.getStr(parseResult, COMMAND_TEXT_KEY))
+    string commandText = ConsoleCommands.ParseResult_CommandText(parseResult)
+    Debug("Invoke command: " + commandText)
     int command = ParseResult_CommandMap(parseResult)
-    Debug("Command to invoke: " + command)
+    Debug("Command to invoke: " + command + " for " + commandText)
     int subcommand = ParseResult_SubcommandMap(parseResult)
     string commandSkseEvent = JMap.getStr(command, CALLBACK_EVENT_KEY)    
     string subcommandSkseEvent = JMap.getStr(subcommand, CALLBACK_EVENT_KEY)    
     ConsoleCommand commandScriptInstance = GetScriptInstanceForCommandOrSubcommand(command)
     ConsoleCommand subcommandScriptInstance = GetScriptInstanceForCommandOrSubcommand(subcommand)
+    Debug("Command Script for " + commandText + " is " + commandScriptInstance)
+
+    ; Allow configuring it to NOT do this for your command or subcommand
+    ConsoleHelper.AddToCommandHistory(commandText)
+    ConsoleHelper.Print(commandText)
+
     if commandSkseEvent
         SendCommandModEvent(commandSkseEvent, parseResult)
     endIf
@@ -596,7 +623,7 @@ int function Parse(string commandText, bool commandOnly = false)
     Debug("All Names: " + names)
     int i
     while i < names.Length
-        Debug("- " + names[i] + " => " + JMap.getObj(GetMap_CommandNamesToMaps(), names[i]) + " ---> " + JMap.getForm(JMap.getObj(GetMap_CommandNamesToMaps(), names[i]), SCRIPT_INSTANCE_KEY))
+        Debug("- " + names[i] + " => " + JMap.getObj(GetMap_CommandNamesToMaps(), names[i]) + " ---> " + GetScriptInstanceForCommandOrSubcommand(JMap.getObj(GetMap_CommandNamesToMaps(), names[i])))
         i += 1
     endWhile
 
