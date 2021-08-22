@@ -1,5 +1,34 @@
 scriptName ConsoleCommand extends Quest hidden
-{Extend this to create your own console command.}
+{Extend this to create your own console command!
+
+Example of a simple command:
+
+  scriptName CoolCommand extends ConsoleCommand
+  
+  event OnCommand()
+    Print("Hello! You called the 'cool' command!")
+  endEvent
+  
+The above example will be automatically detected and you
+will be able to call it in the console via 'cool'.
+
+To change the name of your command in the console:
+
+  scriptName CoolCommand extends ConsoleCommand
+  
+  function Setup()
+    Name = "c"
+  endFunction
+
+  event OnCommand()
+    Print("Hello! You called the 'c' command!")
+  endEvent
+  
+Now the above example can simply be called via 'c'
+
+You can find example source code for various commands
+in the "MP's Console Command Pack" which is bundled
+with the main release of the Console mod.}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Private Fields
