@@ -8,7 +8,7 @@ and extracting information such as:
 The primary function is Parse() which takes command text and returns
 and integer identifier representing the parse results.
 
-To access data about the parsed commands, pass the parse result integer
+To aapiess data about the parsed commands, pass the parse result integer
 identifier to the other functions in this script, e.g.
 - GetCommandName(parseResult)
 - GetSubcommandName(parseResult)

@@ -121,15 +121,15 @@ endFunction
 ;
 ; This is optional if you name your ConsoleCommand "HelloCommand"
 function Name(string name)
-    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
-    cc.Debug("Setting name of command to " + name + " for " + self + "( in map " + cc.GetMap_CommandNamesToMaps() + ")")
-    JMap.setStr(_commandId, cc.NAME_KEY, name)
-    JMap.setObj(cc.GetMap_CommandNamesToMaps(), name, _commandId)
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    api.Debug("Setting name of command to " + name + " for " + self + "( in map " + api.GetMap_CommandNamesToMaps() + ")")
+    JMap.setStr(_commandId, api.NAME_KEY, name)
+    JMap.setObj(api.GetMap_CommandNamesToMaps(), name, _commandId)
 endFunction
 
 string function GetName()
-    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
-    return JMap.getStr(_commandId, cc.NAME_KEY)
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    return JMap.getStr(_commandId, api.NAME_KEY)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,13 +138,13 @@ endFunction
 
 ; If you override this, you must call parent.OnInit()
 event OnInit()
-    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
-    cc.Setup()
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    api.Setup()
     Utility.Wait(0.1)
-    cc.Debug("OnInit " + self)
-    _commandId = cc.CreateAndRegisterNewCommandMap()
-    cc.Debug("Adding script " + self + " to " + _commandId)
-    cc.AddScriptInstanceForCommandOrSubcommand(_commandId, self)
+    api.Debug("OnInit " + self)
+    _commandId = api.CreateAndRegisterNewCommandMap()
+    api.Debug("Adding script " + self + " to " + _commandId)
+    api.AddScriptInstanceForCommandOrSubcommand(_commandId, self)
 
     Setup()
     Info()
@@ -154,7 +154,7 @@ event OnInit()
 
     string commandName = GetName()
     if ! commandName
-        commandName = cc.GetCommandNameForScript(self)
+        commandName = api.GetCommandNameForScript(self)
         if commandName
             Name(commandName)
         endIf
@@ -164,11 +164,11 @@ event OnInit()
         ; If there's a name configured, we enable the main command and any default-enabled subcommands and start listening!
         ; Unless they explicitly called Disable() in one of the setup functions
         if _enabled
-            cc.SetupNewCommandAndItsSubcommands(_commandId)
-            cc.Debug("New command setup: " + commandName)
+            api.SetupNewCommandAndItsSubcommands(_commandId)
+            api.Debug("New command setup: " + commandName)
         endIf
     else
-        cc.Log("Command name could not be deterined for script: " + self)
+        api.Log("Command name could not be deterined for script: " + self)
     endIf
 endEvent
 
@@ -178,16 +178,16 @@ endEvent
 
 function Enable()
     _enabled = true
-    ; TODO cc.EnableCommandAndItsSubcommands()
-    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
-    cc.Log("Enable() not yet fully supported")
+    ; TODO api.EnableCommandAndItsSubcommands()
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    api.Log("Enable() not yet fully supported")
 endFunction
 
 function Disable()
     _enabled = false
-    ; TODO cc.DisableCommandAndItsSubcommands()
-    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
-    cc.Log("Disable() not yet fully supported")
+    ; TODO api.DisableCommandAndItsSubcommands()
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    api.Log("Disable() not yet fully supported")
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -219,7 +219,7 @@ endEvent
 ; Finally, this is responsible for *persisting* the "parseResult"
 ; until OnCommand has completed running.
 event OnCommandResult(int parseResult)
-    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
     JValue.retain(parseResult)
 
     _parseResult = parseResult
@@ -228,7 +228,7 @@ event OnCommandResult(int parseResult)
     _mostRecentArguments = ConsoleCommands.ParseResult_Arguments(parseResult)
     _mostRecentCommandText = ConsoleCommands.ParseResult_CommandText(parseResult)
 
-    cc.Debug("Invoking OnCommand() " + _mostRecentCommandText + " from here in " + _commandId + " (" + self + ")")
+    api.Debug("Invoking OnCommand() " + _mostRecentCommandText + " from here in " + _commandId + " (" + self + ")")
     self.OnCommand()
 
     JValue.release(parseResult)
