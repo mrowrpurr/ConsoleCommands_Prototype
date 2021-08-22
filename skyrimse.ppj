@@ -13,7 +13,7 @@
         <Variable Name="ModName" Value="ConsoleCommands" />
         <Variable Name="SkyrimFolder" Value="C:\Users\mrowr\Dropbox\Skyrim" />
         <Variable Name="ModsFolder" Value="@SkyrimFolder\Mods" />
-        <Variable Name="ImportsFolder" Value="@Skyrim\Imports" />
+        <Variable Name="ImportsFolder" Value="@SkyrimFolder\Imports" />
     </Variables>
     <Imports>
         <Import>@ModsFolder\ConsoleHelper\Scripts\Source</Import>

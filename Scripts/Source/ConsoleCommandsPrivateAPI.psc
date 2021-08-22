@@ -362,7 +362,7 @@ function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptIn
     int arrayNumber = nextAvailableFreeIndex / 128
     int arrayIndex = nextAvailableFreeIndex
     if arrayNumber > 0
-        arrayIndex = nextAvailableFreeIndex % arrayNumber
+        arrayIndex = nextAvailableFreeIndex % 128
     endIf
 
     Debug("Putting " + scriptInstance + " into #" + nextAvailableFreeIndex + " array " + arrayNumber + " spot " + arrayIndex)
@@ -419,7 +419,7 @@ ConsoleCommand function GetScriptInstance(int instanceNumber)
     int arrayNumber = instanceNumber / 128
     int arrayIndex = instanceNumber
     if arrayNumber > 0
-        arrayIndex = instanceNumber % arrayNumber
+        arrayIndex = instanceNumber % 128
     endIf
 
     Debug("Getting script #" + instanceNumber + " from array " + arrayNumber + " spot " + arrayIndex)
