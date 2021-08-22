@@ -1,1 +1,1 @@
-![Console Commands](Images/Logo.png)
+This is `v2` of _"Custom Console Commands"_ and development is currently in progress.
