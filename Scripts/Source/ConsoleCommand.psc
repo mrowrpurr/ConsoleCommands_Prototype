@@ -121,14 +121,14 @@ endFunction
 ;
 ; This is optional if you name your ConsoleCommand "HelloCommand"
 function Name(string name)
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.Debug("Setting name of command to " + name + " for " + self + "( in map " + cc.GetMap_CommandNamesToMaps() + ")")
     JMap.setStr(_commandId, cc.NAME_KEY, name)
     JMap.setObj(cc.GetMap_CommandNamesToMaps(), name, _commandId)
 endFunction
 
 string function GetName()
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     return JMap.getStr(_commandId, cc.NAME_KEY)
 endFunction
 
@@ -138,7 +138,7 @@ endFunction
 
 ; If you override this, you must call parent.OnInit()
 event OnInit()
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.Setup()
     Utility.Wait(0.1)
     cc.Debug("OnInit " + self)
@@ -179,14 +179,14 @@ endEvent
 function Enable()
     _enabled = true
     ; TODO cc.EnableCommandAndItsSubcommands()
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.Log("Enable() not yet fully supported")
 endFunction
 
 function Disable()
     _enabled = false
     ; TODO cc.DisableCommandAndItsSubcommands()
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.Log("Disable() not yet fully supported")
 endFunction
 
@@ -219,7 +219,7 @@ endEvent
 ; Finally, this is responsible for *persisting* the "parseResult"
 ; until OnCommand has completed running.
 event OnCommandResult(int parseResult)
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     JValue.retain(parseResult)
 
     _parseResult = parseResult

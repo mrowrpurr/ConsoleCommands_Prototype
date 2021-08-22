@@ -24,7 +24,7 @@ endFunction
 ; Is the target command is a ConsoleCommand, it will be run.
 ; Otherwise, a native Skyrim console command will be executed.
 function ExecuteCommand(string command) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.ExecuteCommand(command)
 endFunction
 
@@ -33,12 +33,12 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function StartListeningForCommands() global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.ListenForCommands()
 endFunction
 
 function StopListeningForCommands() global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.StopListeningForCommands()
 endFunction
 
@@ -48,7 +48,7 @@ endFunction
 
 ; Register a command
 function RegisterCommand(string command, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "", bool enabled = true) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     if cc.CommandExists(command)
         cc.Log("Command already registered: " + command)
     else
@@ -69,7 +69,7 @@ endFunction
 
 ; Register a subcommand for an existing command
 function RegisterSubcommand(string command, string subcommand, string description = "", ConsoleCommand scriptInstance = None, string callbackEvent = "", bool enabled = true) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int commandMap = cc.GetCommandMapForCommandName(command)
     if commandMap
         int subcommandsMap = JMap.getObj(commandMap, cc.SUBCOMMANDS_KEY)
@@ -115,13 +115,13 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AddFlag(string name, string command = "", string subcommand = "", string short = "", string description = "") global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int commandOrSubcommandMap = cc.GetCommandOrSubcommandMapForName(command, subcommand)
     Command_AddFlag(commandOrSubcommandMap, name, short, description)
 endFunction
 
 function Command_AddFlag(int commandOrSubcommand, string name, string short = "", string description = "") global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int flagsMap = JMap.getObj(commandOrSubcommand, "flags")
 
     int flagMap = JMap.object()
@@ -140,7 +140,7 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AddOption(string type, string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int commandOrSubcommandMap = cc.GetCommandOrSubcommandMapForName(command, subcommand)
     int optionsMap = JMap.getObj(commandOrSubcommandMap, cc.OPTIONS_KEY)
     int optionMap = JMap.object()
@@ -152,17 +152,17 @@ function AddOption(string type, string name, string command = "", string subcomm
 endFunction
 
 function AddFloatOption(string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     AddOption(cc.FLOAT_TYPE, name, command, subcommand, short)
 endFunction
 
 function AddIntOption(string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     AddOption(cc.INT_TYPE, name, command, subcommand, short)
 endFunction
 
 function AddStringOption(string name, string command = "", string subcommand = "", string short = "") global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     AddOption(cc.STRING_TYPE, name, command, subcommand, short)
 endFunction
 
@@ -183,12 +183,12 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function Command_StoreFloat(int commandId, string storageKey, float value) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.StoreFloat(commandId, storageKey, value)
 endFunction
 
 function Command_StoreForm(int commandId, string storageKey, Form value) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     cc.StoreForm(commandId, storageKey, value)
 endFunction
 
@@ -197,7 +197,7 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 float function GetFloat(string command, string storageKey, float default = 0.0) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int commandMap = cc.GetCommandMapForCommandName(command)
     if commandMap
         return Command_GetFloat(commandMap, storageKey, default)
@@ -208,12 +208,12 @@ float function GetFloat(string command, string storageKey, float default = 0.0) 
 endFunction
 
 float function Command_GetFloat(int commandId, string storageKey, float default = 0.0) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     return cc.GetFloat(commandId, storageKey, default)
 endFunction
 
 Form function GetForm(string command, string storageKey, Form default = None) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int commandMap = cc.GetCommandMapForCommandName(command)
     if commandMap
         return Command_GetForm(commandMap, storageKey, default)
@@ -224,7 +224,7 @@ Form function GetForm(string command, string storageKey, Form default = None) gl
 endFunction
 
 Form function Command_GetForm(int commandId, string storageKey, Form default = None) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     return cc.GetForm(commandId, storageKey, default)
 endFunction
 
@@ -233,50 +233,50 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 int function Parse(string commandText) global
-    return __console_commands__.GetInstance().Parse(commandText)
+    return ConsoleCommandsPrivateAPI.GetInstance().Parse(commandText)
 endFunction
 
 string function ParseResult_Command(int parseResult) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     return JMap.getStr(parseResult, cc.COMMAND_KEY)
 endFunction
 
 string function ParseResult_Subcommand(int parseResult) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     return JMap.getStr(parseResult, cc.SUBCOMMAND_KEY)
 endFunction
 
 string[] function ParseResult_Arguments(int parseResult) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int argsArray = JMap.getObj(parseResult, cc.ARGUMENTS_KEY)
     return JArray.asStringArray(argsArray)
 endFunction
 
 string function ParseResult_CommandText(int parseResult) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     return JMap.getStr(parseResult, cc.COMMAND_TEXT_KEY)
 endFunction
 
 bool function ParseResult_HasFlag(int parseResult, string flag) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int flagsArray = JMap.getObj(parseResult, cc.FLAGS_KEY)
     return JArray.findStr(flagsArray, flag) > -1
 endFunction
 
 float function ParseResult_GetFloatOption(int parseResult, string option, float default = 0.0) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int optionsMap = JMap.getObj(parseResult, cc.OPTIONS_KEY)
     return JMap.getFlt(optionsMap, option, default)
 endFunction
 
 int function ParseResult_GetIntOption(int parseResult, string option, int default = 0) global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int optionsMap = JMap.getObj(parseResult, cc.OPTIONS_KEY)
     return JMap.getInt(optionsMap, option, default)
 endFunction
 
 string function ParseResult_GetStringOption(int parseResult, string option, string default = "") global
-    __console_commands__ cc = __console_commands__.GetInstance()
+    ConsoleCommandsPrivateAPI cc = ConsoleCommandsPrivateAPI.GetInstance()
     int optionsMap = JMap.getObj(parseResult, cc.OPTIONS_KEY)
     return JMap.getStr(optionsMap, option, default)
 endFunction

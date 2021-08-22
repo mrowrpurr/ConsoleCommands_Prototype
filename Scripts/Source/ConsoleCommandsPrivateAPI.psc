@@ -1,4 +1,4 @@
-scriptName __console_commands__ extends Quest hidden 
+scriptName ConsoleCommandsPrivateAPI extends Quest hidden 
 {Private Quest script for persisting global data for Custom Console Commands}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -74,12 +74,12 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; [INTERNAL]
-; Returns an instance of __console_commands__ (used for persisting all Custom Console Commands data)
+; Returns an instance of ConsoleCommandsPrivateAPI (used for persisting all Custom Console Commands data)
 ; Please do not use the interface provided by this script.
 ; Instead, use either the ConsoleCommands global interface
 ; or, preferably, create commands by making Quest scripts which extend ConsoleCommand.
-__console_commands__ function GetInstance() global
-    return Game.GetFormFromFile(0x800, "ConsoleCommands.esp") as __console_commands__
+ConsoleCommandsPrivateAPI function GetInstance() global
+    return Game.GetFormFromFile(0x800, "ConsoleCommands.esp") as ConsoleCommandsPrivateAPI
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -147,7 +147,7 @@ function Setup()
 endFunction
 
 ; Runs the first time the mod is installed.
-; See ___console_commands___.OnPlayerLoadGame() for load event handling
+; See ConsoleCommandsVersionManager.OnPlayerLoadGame() for load event handling
 ; after the mod has already been installed.
 event OnInit()
     Setup()
@@ -333,6 +333,8 @@ function AddScriptInstanceForCommandOrSubcommand(int id, ConsoleCommand scriptIn
 
     Debug("Add Script Instance for " + JMap.getStr(id, NAME_KEY))
 
+    ; XXX TODO find out why we get 0/zero from the RandomInt or JArray.getInt (investigate which) in this function
+    ;          had to add extra code to re-calculate a position when zero is selected (unless there's legit only one left)
     int nextAvailableFreeIndex = -1
     int count = 1
     while nextAvailableFreeIndex == -1 && count > 0
