@@ -629,6 +629,7 @@ int function Parse(string commandText, bool commandOnly = false)
         i += 1
     endWhile
 
+    int index = 0
     int result = JMap.object()  
     int flagsArray = JArray.object()
     int optionsMap = JMap.object()  
@@ -644,6 +645,11 @@ int function Parse(string commandText, bool commandOnly = false)
     string command = commandTextParts[0]
     int commandMap = GetCommandMapForCommandName(command)
     if ! commandMap
+        index = 0
+        while index < commandTextParts.Length
+            JArray.addStr(argumentsArray, commandTextParts[index])
+            index += 1
+        endWhile
         return result
     else
         Debug("Parse: found command " + command + " " + commandMap)
@@ -659,7 +665,7 @@ int function Parse(string commandText, bool commandOnly = false)
     int flagsAndOptions = JMap.object()
     AddCommandOrSubcommandFlagsAndOptionsToMap(flagsAndOptions, commandMap)
 
-    int index = 1
+    index = 1
     while index < commandTextParts.Length
         string arg = commandTextParts[index]
 
