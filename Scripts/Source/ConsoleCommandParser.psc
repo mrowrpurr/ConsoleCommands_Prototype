@@ -43,12 +43,13 @@ endFunction
 
 ; ...
 int function Parse(string commandText) global
-    Log("Parse(\"" + commandText + "\")")
     ; Setup result
     int result = JMap.object()
-    JMap.setStr(result, "TEXT", commandText)
+    JMap.setStr(result, "TEXT", commandText) ; Raw provided command text
+    int argumentList = JArray.object()
+    JMap.setObj(result, "LIST", argumentList) ; Raw provided command as list of raw arguments
     int arguments = JArray.object()
-    JMap.setObj(result, "ARGUMENTS", arguments)
+    JMap.setObj(result, "ARGUMENTS", arguments) ; Argument list for this specific command
 
     ; Turn single string 'commandText' into an array of individual 'parts'.
     ;
@@ -71,19 +72,19 @@ int function Parse(string commandText) global
         string character = StringUtil.Substring(commandText, characterIndex, 1)
         if character == doubleQuote && lastCharacter != slash
             if insideStringDefinition ; Close the string
-                JArray.addStr(arguments, currentArgument)
+                JArray.addStr(argumentList, currentArgument)
                 currentArgument = ""
                 insideStringDefinition = false
             else ; Open a new string
                 if currentArgument
-                    JArray.addStr(arguments, currentArgument)
+                    JArray.addStr(argumentList, currentArgument)
                     currentArgument = ""
                 endIf
                 insideStringDefinition = true
             endIf
         elseIf character == space && ! insideStringDefinition ; Save this argument and start a new one
             if currentArgument
-                JArray.addStr(arguments, currentArgument)
+                JArray.addStr(argumentList, currentArgument)
             endIf
             currentArgument = ""
         else ; Add the character to the current argument
@@ -94,8 +95,36 @@ int function Parse(string commandText) global
         characterIndex += 1
     endWhile
     if currentArgument
-        JArray.addStr(arguments, currentArgument)
+        JArray.addStr(argumentList, currentArgument)
     endIf
+    if JArray.count(argumentList) == 0
+        return result
+    endIf
+
+    ; Get the API for working with commands, subcommands, flags, and options
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+
+    ; Lookup command
+    string commandName = JArray.getStr(argumentList, 0)
+    int command = api.GetCommand(commandName)
+    if command
+        JMap.setObj(result, "COMMAND_ID", command)
+        JMap.setStr(result, "COMMAND_NAME", commandName)
+    else
+        JArray.addFromArray(arguments, argumentList)
+        return result
+    endIf
+
+    ; JArray.addFromArray(arguments, argumentList) ; temporary
+    int i = 1
+    string[] args = JArray.asStringArray(argumentList)
+    while i < args.Length
+        JArray.addStr(arguments, args[i])
+        i += 1
+    endWhile
+
+    ; Lookup subcommand
+    ; TODO
 
     ; Return the identifier for the parsed results
     return result
@@ -114,36 +143,40 @@ string function KeyForText() global
     return "TEXT"
 endFunction
 
+string function KeyForList() global
+    return "LIST"
+endFunction
+
 string function KeyForArguments() global
     return "ARGUMENTS"
 endFunction
 
-string function KeyForCommand() global
-    return "COMMAND"
+string function KeyForCommandId() global
+    return "COMMAND_ID"
 endFunction
 
 string function KeyForCommandName() global
     return "COMMAND_NAME"
 endFunction
 
-string function KeyForSubcommand() global
-    return "SUBCOMMAND"
+string function KeyForSubcommandId() global
+    return "SUBCOMMAND_ID"
 endFunction
 
 string function KeyForSubcommandName() global
     return "SUBCOMMAND_NAME"
 endFunction
 
-string function KeyForFlags() global
-    return "FLAGS"
+string function KeyForFlagIds() global
+    return "FLAG_IDS"
 endFunction
 
 string function KeyForFlagNames() global
     return "FLAG_NAMES"
 endFunction
 
-string function KeyForOptions() global
-    return "OPTIONS"
+string function KeyForOptionIds() global
+    return "OPTION_IDS"
 endFunction
 
 string function KeyForOptionNames() global
@@ -174,6 +207,10 @@ string function GetArgument(int result, int index) global
     return JArray.getStr(JMap.getObj(result, "ARGUMENTS"), index)
 endFunction
 
+string function GetCommand(int result) global
+    return JMap.getStr(result, "COMMAND_NAME")
+endFunction
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper functions for getting IDs
 ;;
@@ -183,7 +220,9 @@ endFunction
 ;; performance.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO
+int function IdForCommand(int result) global
+    return JMap.getObj(result, "COMMAND_ID")
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Options to Persist / Unpersist result
