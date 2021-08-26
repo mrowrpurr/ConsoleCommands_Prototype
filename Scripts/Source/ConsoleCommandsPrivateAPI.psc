@@ -74,18 +74,31 @@ endProperty
 bool function AddCommand(string name)
     int command = JMap.object()
     JMap.setStr(command, KEY_Data_Commands_Name, name)
-    JIntMap.setObj(Data_Commands, command, command)
-    JMap.setObj(Data_CommandNames, name, command)
+    JIntMap.setObj(Data_Commands, command, command) ; Add command object
+    JMap.setObj(Data_CommandNames, name, command)   ; Add to command names
     return true ; TODO
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
+;; Remove Command
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+bool function RemoveCommand(string name)
+    int command = GetCommand(name)
+    if command
+        JMap.removeKey(Data_CommandNames, name)   ; Remove from names (O(n))
+        JIntMap.removeKey(Data_Commands, command) ; JMap.removeKey(Data_Commands) ; Remove command object
+    endIf
+    return true ; TODO
+endFunction
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Get ID for Command (from name)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;s
+
+int function GetCommand(string name)
+    return JMap.getObj(Data_CommandNames, name)
+endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
