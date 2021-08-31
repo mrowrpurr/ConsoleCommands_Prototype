@@ -110,6 +110,19 @@ function RegisterEvent(string command, string eventName) global
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ConsoleCommand script registration
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function RegisterScript(string command, ConsoleCommand script) global
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    int id = api.GetCommandOrSubcommandByFullName(command)
+    api.Log("global RegisterScript " + command + " " + script + " : " + id)
+    if id
+        api.RegisterScript(id, script)
+    endIf
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

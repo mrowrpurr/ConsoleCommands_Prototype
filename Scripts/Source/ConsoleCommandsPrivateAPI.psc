@@ -39,14 +39,18 @@ endProperty
 
 ; Setup data structures for storing commands and metadata
 function InitializeStorage()
-    _data = JMap.object() ; Setup Data as a fresh new Map (string map)
-    JValue.retain(_data)  ; Hold onto this! Don't garbage collect it!
-    JMap.setObj(Data, "commands", JIntMap.object())
-    JMap.setObj(Data, "commandsByName", JMap.object())
+    if _data == 0
+        _data = JMap.object() ; Setup Data as a fresh new Map (string map)
+        JValue.retain(_data)  ; Hold onto this! Don't garbage collect it!
+        JMap.setObj(Data, "commands", JIntMap.object())
+        JMap.setObj(Data, "commandsByName", JMap.object())
+        ResetCommandScriptArrays()
+    endIf
 endFunction
 
 function ResetStorage()
     JValue.release(_data)
+    _data = 0
     InitializeStorage()
 endFunction
 
@@ -225,9 +229,13 @@ string function ExecuteCommand(string command) ; Add options for whether to add 
     int parseResult = ConsoleCommandParser.Parse(command)
     int parentCommand = ConsoleCommandParser.IdForCommandOrSubcommand(parseResult)
     if parentCommand
-        return InvokeCommand(parentCommand, parseResult)
+        JValue.retain(parseResult)
+        string response = InvokeCommand(parentCommand, parseResult)
+        JValue.release(parseResult)
+        return response
     else
-        ; Do nothing...
+        Log("Command not custom, invoking natively: " + command)
+        return ConsoleHelper.ExecuteCommand(command) ; TODO pass options...
     endIf
 endFunction
 
@@ -236,12 +244,19 @@ string function InvokeCommand(int parentCommand, int parseResult)
     ; TODO walk up the tree
     
     string skseEventName = JMap.getStr(parentCommand, "skseEventName")
-    ; TODO script!
-
     if skseEventName
         Log("SendModEvent " + skseEventName)
         string fullCommandText = ConsoleCommandParser.GetText(parseResult)
         SendModEvent(skseEventName, fullCommandText, parseResult)
+    endIf
+
+    int registeredScriptSlot = JMap.getInt(parentCommand, "scriptRegistrationSlot")
+    if registeredScriptSlot
+        ConsoleCommand script = GetScript(registeredScriptSlot)
+        if script
+            Log("Invoking OnCommand for script: " + script)
+            return script.InvokeCommand(parseResult)
+        endIf
     endIf
 
     return "" ; TODO return result, even from SKSE Mod Events (by reading from the console)
@@ -254,4 +269,318 @@ endFunction
 function RegisterEvent(int parentCommand, string eventName)
     Log("Register for mod event " + parentCommand + " " + eventName)
     JMap.setStr(parentCommand, "skseEventName", eventName)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ConsoleCommand script registration
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+float _scriptRegistrationLock
+
+; Console Commands currently supports a maximum of 5,120 console command scripts
+ConsoleCommand[] _commandScripts0
+ConsoleCommand[] _commandScripts1
+ConsoleCommand[] _commandScripts2
+ConsoleCommand[] _commandScripts3
+ConsoleCommand[] _commandScripts4
+ConsoleCommand[] _commandScripts5
+ConsoleCommand[] _commandScripts6
+ConsoleCommand[] _commandScripts7
+ConsoleCommand[] _commandScripts8
+ConsoleCommand[] _commandScripts9
+ConsoleCommand[] _commandScripts10
+ConsoleCommand[] _commandScripts11
+ConsoleCommand[] _commandScripts12
+ConsoleCommand[] _commandScripts13
+ConsoleCommand[] _commandScripts14
+ConsoleCommand[] _commandScripts15
+ConsoleCommand[] _commandScripts16
+ConsoleCommand[] _commandScripts17
+ConsoleCommand[] _commandScripts18
+ConsoleCommand[] _commandScripts19
+ConsoleCommand[] _commandScripts20
+ConsoleCommand[] _commandScripts21
+ConsoleCommand[] _commandScripts22
+ConsoleCommand[] _commandScripts23
+ConsoleCommand[] _commandScripts24
+ConsoleCommand[] _commandScripts25
+ConsoleCommand[] _commandScripts26
+ConsoleCommand[] _commandScripts27
+ConsoleCommand[] _commandScripts28
+ConsoleCommand[] _commandScripts29
+ConsoleCommand[] _commandScripts30
+ConsoleCommand[] _commandScripts31
+ConsoleCommand[] _commandScripts32
+ConsoleCommand[] _commandScripts33
+ConsoleCommand[] _commandScripts34
+ConsoleCommand[] _commandScripts35
+ConsoleCommand[] _commandScripts36
+ConsoleCommand[] _commandScripts37
+ConsoleCommand[] _commandScripts38
+ConsoleCommand[] _commandScripts39
+
+function ResetCommandScriptArrays()
+    Log("Resetting Command Script Arrays...")
+    _commandScripts0 = new ConsoleCommand[128]
+    _commandScripts1 = new ConsoleCommand[128]
+    _commandScripts2 = new ConsoleCommand[128]
+    _commandScripts3 = new ConsoleCommand[128]
+    _commandScripts4 = new ConsoleCommand[128]
+    _commandScripts5 = new ConsoleCommand[128]
+    _commandScripts6 = new ConsoleCommand[128]
+    _commandScripts7 = new ConsoleCommand[128]
+    _commandScripts8 = new ConsoleCommand[128]
+    _commandScripts9 = new ConsoleCommand[128]
+    _commandScripts10 = new ConsoleCommand[128]
+    _commandScripts11 = new ConsoleCommand[128]
+    _commandScripts12 = new ConsoleCommand[128]
+    _commandScripts13 = new ConsoleCommand[128]
+    _commandScripts14 = new ConsoleCommand[128]
+    _commandScripts15 = new ConsoleCommand[128]
+    _commandScripts16 = new ConsoleCommand[128]
+    _commandScripts17 = new ConsoleCommand[128]
+    _commandScripts18 = new ConsoleCommand[128]
+    _commandScripts19 = new ConsoleCommand[128]
+    _commandScripts20 = new ConsoleCommand[128]
+    _commandScripts21 = new ConsoleCommand[128]
+    _commandScripts22 = new ConsoleCommand[128]
+    _commandScripts23 = new ConsoleCommand[128]
+    _commandScripts24 = new ConsoleCommand[128]
+    _commandScripts25 = new ConsoleCommand[128]
+    _commandScripts26 = new ConsoleCommand[128]
+    _commandScripts27 = new ConsoleCommand[128]
+    _commandScripts28 = new ConsoleCommand[128]
+    _commandScripts29 = new ConsoleCommand[128]
+    _commandScripts30 = new ConsoleCommand[128]
+    _commandScripts31 = new ConsoleCommand[128]
+    _commandScripts32 = new ConsoleCommand[128]
+    _commandScripts33 = new ConsoleCommand[128]
+    _commandScripts34 = new ConsoleCommand[128]
+    _commandScripts35 = new ConsoleCommand[128]
+    _commandScripts36 = new ConsoleCommand[128]
+    _commandScripts37 = new ConsoleCommand[128]
+    _commandScripts38 = new ConsoleCommand[128]
+    _commandScripts39 = new ConsoleCommand[128]
+    int availableScriptIndices = JArray.object()
+    JMap.setObj(Data, "availableScriptIndices", availableScriptIndices)
+    int index = 0
+    while index < 5120
+        JArray.addInt(availableScriptIndices, index)
+        index += 1
+    endWhile
+    Log("Command Script Arrays Reset.")
+endFunction
+
+function StoreScript(int slot, ConsoleCommand script)
+    int arrayNumber = slot / 128
+    int arrayIndex = slot % 128
+    if arrayNumber == 0
+        _commandScripts0[arrayIndex] = script
+    elseIf arrayNumber == 1
+        _commandScripts1[arrayIndex] = script
+    elseIf arrayNumber == 2
+        _commandScripts2[arrayIndex] = script
+    elseIf arrayNumber == 3
+        _commandScripts3[arrayIndex] = script
+    elseIf arrayNumber == 4
+        _commandScripts4[arrayIndex] = script
+    elseIf arrayNumber == 5
+        _commandScripts5[arrayIndex] = script
+    elseIf arrayNumber == 6
+        _commandScripts6[arrayIndex] = script
+    elseIf arrayNumber == 7
+        _commandScripts7[arrayIndex] = script
+    elseIf arrayNumber == 8
+        _commandScripts8[arrayIndex] = script
+    elseIf arrayNumber == 9
+        _commandScripts9[arrayIndex] = script
+    elseIf arrayNumber == 10
+        _commandScripts10[arrayIndex] = script
+    elseIf arrayNumber == 11
+        _commandScripts11[arrayIndex] = script
+    elseIf arrayNumber == 12
+        _commandScripts12[arrayIndex] = script
+    elseIf arrayNumber == 13
+        _commandScripts13[arrayIndex] = script
+    elseIf arrayNumber == 14
+        _commandScripts14[arrayIndex] = script
+    elseIf arrayNumber == 15
+        _commandScripts15[arrayIndex] = script
+    elseIf arrayNumber == 16
+        _commandScripts16[arrayIndex] = script
+    elseIf arrayNumber == 17
+        _commandScripts17[arrayIndex] = script
+    elseIf arrayNumber == 18
+        _commandScripts18[arrayIndex] = script
+    elseIf arrayNumber == 19
+        _commandScripts19[arrayIndex] = script
+    elseIf arrayNumber == 20
+        _commandScripts20[arrayIndex] = script
+    elseIf arrayNumber == 21
+        _commandScripts21[arrayIndex] = script
+    elseIf arrayNumber == 22
+        _commandScripts22[arrayIndex] = script
+    elseIf arrayNumber == 23
+        _commandScripts23[arrayIndex] = script
+    elseIf arrayNumber == 24
+        _commandScripts24[arrayIndex] = script
+    elseIf arrayNumber == 25
+        _commandScripts25[arrayIndex] = script
+    elseIf arrayNumber == 26
+        _commandScripts26[arrayIndex] = script
+    elseIf arrayNumber == 27
+        _commandScripts27[arrayIndex] = script
+    elseIf arrayNumber == 28
+        _commandScripts28[arrayIndex] = script
+    elseIf arrayNumber == 29
+        _commandScripts29[arrayIndex] = script
+    elseIf arrayNumber == 30
+        _commandScripts30[arrayIndex] = script
+    elseIf arrayNumber == 31
+        _commandScripts31[arrayIndex] = script
+    elseIf arrayNumber == 32
+        _commandScripts32[arrayIndex] = script
+    elseIf arrayNumber == 33
+        _commandScripts33[arrayIndex] = script
+    elseIf arrayNumber == 34
+        _commandScripts34[arrayIndex] = script
+    elseIf arrayNumber == 35
+        _commandScripts35[arrayIndex] = script
+    elseIf arrayNumber == 36
+        _commandScripts36[arrayIndex] = script
+    elseIf arrayNumber == 37
+        _commandScripts37[arrayIndex] = script
+    elseIf arrayNumber == 38
+        _commandScripts38[arrayIndex] = script
+    elseIf arrayNumber == 39
+        _commandScripts39[arrayIndex] = script
+    endIf
+endFunction
+
+ConsoleCommand function GetScript(int slot)
+    int arrayNumber = slot / 128
+    int arrayIndex = slot % 128
+    if arrayNumber == 0
+        return _commandScripts0[arrayIndex]
+    elseIf arrayNumber == 1
+        return _commandScripts1[arrayIndex]
+    elseIf arrayNumber == 2
+        return _commandScripts2[arrayIndex]
+    elseIf arrayNumber == 3
+        return _commandScripts3[arrayIndex]
+    elseIf arrayNumber == 4
+        return _commandScripts4[arrayIndex]
+    elseIf arrayNumber == 5
+        return _commandScripts5[arrayIndex]
+    elseIf arrayNumber == 6
+        return _commandScripts6[arrayIndex]
+    elseIf arrayNumber == 7
+        return _commandScripts7[arrayIndex]
+    elseIf arrayNumber == 8
+        return _commandScripts8[arrayIndex]
+    elseIf arrayNumber == 9
+        return _commandScripts9[arrayIndex]
+    elseIf arrayNumber == 10
+        return _commandScripts10[arrayIndex]
+    elseIf arrayNumber == 11
+        return _commandScripts11[arrayIndex]
+    elseIf arrayNumber == 12
+        return _commandScripts12[arrayIndex]
+    elseIf arrayNumber == 13
+        return _commandScripts13[arrayIndex]
+    elseIf arrayNumber == 14
+        return _commandScripts14[arrayIndex]
+    elseIf arrayNumber == 15
+        return _commandScripts15[arrayIndex]
+    elseIf arrayNumber == 16
+        return _commandScripts16[arrayIndex]
+    elseIf arrayNumber == 17
+        return _commandScripts17[arrayIndex]
+    elseIf arrayNumber == 18
+        return _commandScripts18[arrayIndex]
+    elseIf arrayNumber == 19
+        return _commandScripts19[arrayIndex]
+    elseIf arrayNumber == 20
+        return _commandScripts20[arrayIndex]
+    elseIf arrayNumber == 21
+        return _commandScripts21[arrayIndex]
+    elseIf arrayNumber == 22
+        return _commandScripts22[arrayIndex]
+    elseIf arrayNumber == 23
+        return _commandScripts23[arrayIndex]
+    elseIf arrayNumber == 24
+        return _commandScripts24[arrayIndex]
+    elseIf arrayNumber == 25
+        return _commandScripts25[arrayIndex]
+    elseIf arrayNumber == 26
+        return _commandScripts26[arrayIndex]
+    elseIf arrayNumber == 27
+        return _commandScripts27[arrayIndex]
+    elseIf arrayNumber == 28
+        return _commandScripts28[arrayIndex]
+    elseIf arrayNumber == 29
+        return _commandScripts29[arrayIndex]
+    elseIf arrayNumber == 30
+        return _commandScripts30[arrayIndex]
+    elseIf arrayNumber == 31
+        return _commandScripts31[arrayIndex]
+    elseIf arrayNumber == 32
+        return _commandScripts32[arrayIndex]
+    elseIf arrayNumber == 33
+        return _commandScripts33[arrayIndex]
+    elseIf arrayNumber == 34
+        return _commandScripts34[arrayIndex]
+    elseIf arrayNumber == 35
+        return _commandScripts35[arrayIndex]
+    elseIf arrayNumber == 36
+        return _commandScripts36[arrayIndex]
+    elseIf arrayNumber == 37
+        return _commandScripts37[arrayIndex]
+    elseIf arrayNumber == 38
+        return _commandScripts38[arrayIndex]
+    elseIf arrayNumber == 39
+        return _commandScripts39[arrayIndex]
+    endIf
+endFunction
+
+function RegisterScript(int parentCommand, ConsoleCommand script, float lock = 0.0, int availableScriptIndices = 0)
+    if availableScriptIndices == 0
+        availableScriptIndices = JMap.getObj(Data, "availableScriptIndices")
+    endIf
+
+    if lock == 0.0
+        lock = Utility.RandomFloat(1.0, 10000.0)
+    endIf
+
+    while _scriptRegistrationLock != 0.0
+        Utility.WaitMenuMode(0.01)
+    endWhile
+
+    _scriptRegistrationLock = lock
+
+    if _scriptRegistrationLock == lock
+        if _scriptRegistrationLock == lock
+            int availableIndicesCount = JArray.count(availableScriptIndices)
+            if availableScriptIndices == 0
+                Log("No available script slots to register command " + script + " (are there 5,120 command registered? that is the maximum.)")
+                return
+            endIf
+            int registrationSlot = JArray.getInt(availableScriptIndices, availableIndicesCount - 1)
+            if registrationSlot == 0
+                registrationSlot = JArray.getInt(availableScriptIndices, availableIndicesCount - 1)
+            endIf
+            if registrationSlot == 0
+                Log("Could not get available script slot for command " + script + " (are there 5,120 command registered? that is the maximum.)")
+            endIf
+            JArray.eraseIndex(availableScriptIndices, 0)
+            _scriptRegistrationLock = 0.0
+            StoreScript(registrationSlot, script)
+            JMap.setInt(parentCommand, "scriptRegistrationSlot", registrationSlot)
+            Log("Registered Script " + script + " in slot #" + registrationSlot)
+        else
+            RegisterScript(parentCommand, script, lock, availableScriptIndices)
+        endIf
+    else
+        RegisterScript(parentCommand, script, lock, availableScriptIndices)
+    endIf
 endFunction

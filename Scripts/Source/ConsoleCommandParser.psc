@@ -189,15 +189,3 @@ int function IdForCommandOrSubcommand(int result) global
         return IdForCommand(result)
     endIf
 endFunction
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Options to Persist / Unpersist result
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-function SaveResult(int result) global
-    JValue.retain(result)
-endFunction
-
-function UnsaveResult(int result) global
-    JValue.release(result)
-endFunction
