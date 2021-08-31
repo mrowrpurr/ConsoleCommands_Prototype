@@ -103,6 +103,7 @@ endFunction
 function RegisterEvent(string command, string eventName) global
     ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
     int id = api.GetCommandOrSubcommandByFullName(command)
+    api.Log("global RegisterEvent " + command + " " + eventName + " : " + id)
     if id
         api.RegisterEvent(id, eventName)
     endIf

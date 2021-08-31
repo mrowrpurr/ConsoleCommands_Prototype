@@ -92,7 +92,7 @@ int function AddCommand(string name)
     int command = JMap.object()
     JMap.setObj(Data_CommandNames, name, command)               ; Add to command name ==> command ID map
     JMap.setStr(command, "name", name)                          ; Let the command know its name
-    JMap.setObj(command, "command", command)                    ; Reference to command for use in subcommands (every parent (command/subcommand) should have a reference back to the command)
+    JMap.setInt(command, "commandId", command)                  ; Reference to command for use in subcommands (every parent (command/subcommand) should have a reference back to the command)
     JMap.setStr(command, "fullName", name)                      ; fullName for use in subcommands (every parent (command/subcommand) should have a fullName)
     JMap.setObj(command, "allSubcommands", JMap.object())       ; Add subcommand full name ==> subcommand ID map (this is only on the command, not subcommands)
     JMap.setObj(command, "subcommands", JIntMap.object())       ; Add subcommand ==> subcommand ID map
@@ -144,14 +144,14 @@ endFunction
 int function AddSubcommand(int parentCommand, string subcommandName)
     string parentFullCommand = JMap.getStr(parentCommand, "fullName")
     int commandId = JMap.getInt(parentCommand, "commandId")
-    string fullName = parentFullCommand + subcommandName
+    string fullName = parentFullCommand + " " + subcommandName
     int subcommands = JMap.getObj(parentCommand, "subcommands")
     int subcommandsByName = JMap.getObj(parentCommand, "subcommandsByName")
     int subcommand = JMap.object()
     JIntMap.setObj(subcommands, subcommand, subcommand)            ; Add to parents' subcommands
     JMap.setObj(subcommandsByName, subcommandName, subcommand)     ; Add to parents' subcommands
     JMap.setStr(subcommand, "name", subcommandName)                ; Let the subcommand know its name
-    JMap.setObj(subcommand, "command", commandId)                  ; Reference to command for use in subcommands (every parent (command/subcommand) should have a reference back to the command)
+    JMap.setInt(subcommand, "commandId", commandId)                ; Reference to command for use in subcommands (every parent (command/subcommand) should have a reference back to the command)
     JMap.setStr(subcommand, "fullName", fullName)                  ; Let the subcommand know its full name (including parent command/subcommands)
     JMap.setObj(subcommand, "parent", parentCommand)               ; Let the subcommand know its parent (another subcommand or top-level command)
     JMap.setObj(subcommand, "subcommands", JIntMap.object())       ; Add subcommand ==> subcommand ID map
@@ -162,8 +162,9 @@ int function AddSubcommand(int parentCommand, string subcommandName)
     JMap.setObj(subcommand, "optionsByName", JMap.object())        ; Add option name ==> option ID map
     JMap.setObj(subcommand, "flagAndOptionsByText", JMap.object()) ; Add joint lookup for flags/options by console text, e.g. "--silent" "-s" (does not store options for any subcommands)
     ; Add aliases so commands know their aliases
-    int command = JIntMap.getObj(Data_Commands, commandId)
-    int allSubcommands = JMap.getObj(command, "allSubcommands")
+    Log("Add Subcommand " + subcommandName + " Full: " + fullName + " ID: " + subcommand)
+    int allSubcommands = JMap.getObj(commandId, "allSubcommands")
+    Log("Adding " + fullName + " to allSubcommands " + allSubcommands + " for command " + commandId)
     JMap.setObj(allSubcommands, fullName, subcommand)
     return subcommand
 endFunction
@@ -206,6 +207,7 @@ int function GetCommandOrSubcommandByFullName(string fullCommand)
         int command = GetCommand(parts[0])
         if command
             int allSubcommands = JMap.getObj(command, "allSubcommands")
+            Log("Looking for " + fullCommand + " in " + JMap.allKeysPArray(allSubcommands))
             return JMap.getObj(allSubcommands, fullCommand)
         endIf
     endIf
@@ -250,5 +252,6 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function RegisterEvent(int parentCommand, string eventName)
+    Log("Register for mod event " + parentCommand + " " + eventName)
     JMap.setStr(parentCommand, "skseEventName", eventName)
 endFunction
