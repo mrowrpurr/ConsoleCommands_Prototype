@@ -88,6 +88,27 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Execute Command
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+string function ExecuteCommand(string command) global ; Add options for whether to add the command to the command history and print it etc
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    return api.ExecuteCommand(command)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SKSE Mod Event Command Handlers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function RegisterEvent(string command, string eventName) global
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    int id = api.GetCommandOrSubcommandByFullName(command)
+    if id
+        api.RegisterEvent(id, eventName)
+    endIf
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

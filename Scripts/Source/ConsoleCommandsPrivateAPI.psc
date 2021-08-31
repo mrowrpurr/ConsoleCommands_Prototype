@@ -73,6 +73,14 @@ int property Data_CommandNames
 endProperty
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Logging
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function Log(string text)
+    Debug.Trace("[ConsoleCommands] " + text)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -157,6 +165,7 @@ int function AddSubcommand(int parentCommand, string subcommandName)
     int command = JIntMap.getObj(Data_Commands, commandId)
     int allSubcommands = JMap.getObj(command, "allSubcommands")
     JMap.setObj(allSubcommands, fullName, subcommand)
+    return subcommand
 endFunction
 
 function AddSubcommandAlias(int subcommand, string aliasName)
@@ -200,4 +209,46 @@ int function GetCommandOrSubcommandByFullName(string fullCommand)
             return JMap.getObj(allSubcommands, fullCommand)
         endIf
     endIf
+    Log("Command or Subcommand not found by full command: '" + fullCommand + "'")
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Execute and Invoke Commands
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; TODO ; int parentCommand = ConsoleCommandParser. TODO - have this give us the SPECIFIC discovered subcommand (or top level command)
+
+string function ExecuteCommand(string command) ; Add options for whether to add the command to the command history and print it etc
+    Log("ExecuteCommand '" + command + "'")
+    int parseResult = ConsoleCommandParser.Parse(command)
+    int parentCommand = ConsoleCommandParser.IdForCommandOrSubcommand(parseResult)
+    if parentCommand
+        return InvokeCommand(parentCommand, parseResult)
+    else
+        ; Do nothing...
+    endIf
+endFunction
+
+string function InvokeCommand(int parentCommand, int parseResult)
+    Log("InvokeCommand " + parentCommand)
+    ; TODO walk up the tree
+    
+    string skseEventName = JMap.getStr(parentCommand, "skseEventName")
+    ; TODO script!
+
+    if skseEventName
+        Log("SendModEvent " + skseEventName)
+        string fullCommandText = ConsoleCommandParser.GetText(parseResult)
+        SendModEvent(skseEventName, fullCommandText, parseResult)
+    endIf
+
+    return "" ; TODO return result, even from SKSE Mod Events (by reading from the console)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SKSE Mod Event Command Handlers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function RegisterEvent(int parentCommand, string eventName)
+    JMap.setStr(parentCommand, "skseEventName", eventName)
 endFunction

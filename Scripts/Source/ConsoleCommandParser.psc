@@ -108,6 +108,7 @@ int function Parse(string commandText) global
     string commandName = JArray.getStr(argumentList, 0)
     int command = api.GetCommand(commandName)
     if command
+        JArray.eraseIndex(argumentList, 0)
         JMap.setObj(result, "COMMAND_ID", command)
         JMap.setStr(result, "COMMAND_NAME", commandName)
     else
@@ -115,72 +116,24 @@ int function Parse(string commandText) global
         return result
     endIf
 
+    string subcommandName = JArray.getStr(argumentList, 0)
+    int subcommand = api.GetSubcommand(command, subcommandName)
+    if subcommand
+        JArray.eraseIndex(argumentList, 0)
+        JMap.setObj(result, "SUBCOMMAND_ID", subcommand)
+        JMap.setStr(result, "SUBCOMMAND_NAME", subcommandName)
+    endIf
+
     ; JArray.addFromArray(arguments, argumentList) ; temporary
-    int i = 1
+    int i = 0
     string[] args = JArray.asStringArray(argumentList)
     while i < args.Length
         JArray.addStr(arguments, args[i])
         i += 1
     endWhile
 
-    ; Lookup subcommand
-    ; TODO
-
     ; Return the identifier for the parsed results
     return result
-endFunction
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Helpers for getting keys
-;;
-;; These are provided for other parts of
-;; ConsoleCommands but are not used here
-;; in the parser to provide improved
-;; performance.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-string function KeyForText() global
-    return "TEXT"
-endFunction
-
-string function KeyForList() global
-    return "LIST"
-endFunction
-
-string function KeyForArguments() global
-    return "ARGUMENTS"
-endFunction
-
-string function KeyForCommandId() global
-    return "COMMAND_ID"
-endFunction
-
-string function KeyForCommandName() global
-    return "COMMAND_NAME"
-endFunction
-
-string function KeyForSubcommandId() global
-    return "SUBCOMMAND_ID"
-endFunction
-
-string function KeyForSubcommandName() global
-    return "SUBCOMMAND_NAME"
-endFunction
-
-string function KeyForFlagIds() global
-    return "FLAG_IDS"
-endFunction
-
-string function KeyForFlagNames() global
-    return "FLAG_NAMES"
-endFunction
-
-string function KeyForOptionIds() global
-    return "OPTION_IDS"
-endFunction
-
-string function KeyForOptionNames() global
-    return "OPTION_NAMES"
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -222,6 +175,19 @@ endFunction
 
 int function IdForCommand(int result) global
     return JMap.getObj(result, "COMMAND_ID")
+endFunction
+
+int function IdForSubcommand(int result) global
+    return JMap.getObj(result, "SUBCOMMAND_ID")
+endFunction
+
+int function IdForCommandOrSubcommand(int result) global
+    int subcommandId = IdForSubcommand(result)
+    if subcommandId
+        return subcommandId
+    else
+        return IdForCommand(result)
+    endIf
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
