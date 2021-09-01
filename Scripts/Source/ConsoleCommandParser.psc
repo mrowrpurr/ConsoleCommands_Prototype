@@ -16,24 +16,6 @@ e.g. int command = ConsoleCommandParser.IdForCommand([parse result int identifie
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Anatomy of a parse result object:
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main Parser
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -50,6 +32,8 @@ int function Parse(string commandText) global
     JMap.setObj(result, "LIST", argumentList) ; Raw provided command as list of raw arguments
     int arguments = JArray.object()
     JMap.setObj(result, "ARGUMENTS", arguments) ; Argument list for this specific command
+    int flags = JMap.object()
+    JMap.setObj(result, "FLAGS", flags) ; Map of flag names to flag integer identifiers
 
     ; Turn single string 'commandText' into an array of individual 'parts'.
     ;
@@ -137,13 +121,18 @@ int function Parse(string commandText) global
         if subcommand
             MiscUtil.PrintConsole("This argument is a subcommand: " + thisArgument + " - " + commandText)
             parentCommand = subcommand
-
-        ; elseIf Option
-        ; elseIf Flag
         else
-            MiscUtil.PrintConsole("This is a regular ol' argument: " + thisArgument + " - " + commandText)
-            JArray.addStr(arguments, thisArgument)
+            int flagAndOptionsByText = JMap.getObj(parentCommand, "flagAndOptionsByText")
+            int flag = JMap.getObj(flagAndOptionsByText, thisArgument)
+            if flag
+                JMap.setObj(flags, JMap.getStr(flag, "name"), flag)
+            else
+                MiscUtil.PrintConsole("This is a regular ol' argument: " + thisArgument + " - " + commandText)
+                JArray.addStr(arguments, thisArgument)
+            endIf
         endIf
+
+        ; TODO Option
 
         ;
         argumentIndex += 1
@@ -184,6 +173,11 @@ endFunction
 
 string function GetCommand(int result) global
     return JMap.getStr(result, "COMMAND_NAME")
+endFunction
+
+bool function HasFlag(int result, string flag) global
+    int flags = JMap.getObj(result, "FLAGS")
+    return JMap.hasKey(flags, flag)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

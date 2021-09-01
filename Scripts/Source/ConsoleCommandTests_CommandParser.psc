@@ -22,6 +22,10 @@ function Tests()
     Test("can parse a single subcommand without arguments").Fn(Subcommand_NoArguments())
     Test("can parse a single subcommand with arguments").Fn(Subcommand_WithArguments())
     Test("can parse a subcommand of a subcommand without arguments").Fn(Subcommand_Subcommand_NoArguments())
+
+    ; Flags
+    Test("can parse command with flag").Fn(Command_WithFlag())
+    ; Test("can parse command and subcommand with flags").Fn()
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -175,9 +179,8 @@ endFunction
 
 function Subcommand_Subcommand_NoArguments()
     int command = ConsoleCommands.Add("greeting")
-    int subcommand = ConsoleCommands.AddSubcommand("greeting", "hello")
+    int subcommand = ConsoleCommands.AddSubcommand("greeting", "hello", short = "h")
     int subcommand_subcommand = ConsoleCommands.AddSubcommand("greeting hello", "hi")
-    MiscUtil.PrintConsole("Subcommand Subcommand ID: " + subcommand_subcommand)
 
     int result = ConsoleCommandParser.Parse("greeting hi")
     ExpectInt(ConsoleCommandParser.IdForCommand(result)).To(EqualInt(command))
@@ -198,11 +201,38 @@ function Subcommand_Subcommand_NoArguments()
     ExpectInt(ConsoleCommandParser.IdForCommandOrSubcommand(result)).To(EqualInt(subcommand_subcommand))
     ExpectInt(ConsoleCommandParser.IdForSubcommand(result)).To(EqualInt(subcommand_subcommand))
     ExpectStringArray(ConsoleCommandParser.GetArguments(result)).To(BeEmpty())
+
+    ; Alias
+    result = ConsoleCommandParser.Parse("greeting h hi")
+    ExpectInt(ConsoleCommandParser.IdForCommand(result)).To(EqualInt(command))
+    ExpectInt(ConsoleCommandParser.IdForCommandOrSubcommand(result)).To(EqualInt(subcommand_subcommand))
+    ExpectInt(ConsoleCommandParser.IdForSubcommand(result)).To(EqualInt(subcommand_subcommand))
+    ExpectStringArray(ConsoleCommandParser.GetArguments(result)).To(BeEmpty())
+
+    JValue.writeToFile(command, "ExampleCommand.json")
 endFunction
 
 ; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ;; Flags
 ; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function Command_WithFlag()
+    ConsoleCommands.Add("hello")
+    ConsoleCommands.AddFlag("verbose", "v", command = "hello")
+
+    int result = ConsoleCommandParser.Parse("hello -v blah")
+    ExpectStringArray(ConsoleCommandParser.GetArguments(result)).To(HaveLength(1))
+    ExpectString(ConsoleCommandParser.GetArgument(result, 0)).To(EqualString("blah"))
+    ExpectBool(ConsoleCommandParser.HasFlag(result, "verbose")).To(BeTrue())
+
+    result = ConsoleCommandParser.Parse("hello blah")
+    ExpectStringArray(ConsoleCommandParser.GetArguments(result)).To(HaveLength(1))
+    ExpectString(ConsoleCommandParser.GetArgument(result, 0)).To(EqualString("blah"))
+    ExpectBool(ConsoleCommandParser.HasFlag(result, "verbose")).To(BeFalse())
+endFunction
+
+; function CommandAndSubcommands_WithFlags()
+; endFunction
 
 ; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ;; Options

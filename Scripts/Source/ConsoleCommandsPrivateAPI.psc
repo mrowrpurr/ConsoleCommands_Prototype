@@ -222,6 +222,53 @@ int function GetCommandOrSubcommandByFullName(string fullCommand)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Flags
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+int function GetFlag(int parentCommand, string name)
+    int flagsByName = JMap.getObj(parentCommand, "flagsByName")
+    return JMap.getObj(flagsByName, name)
+endFunction
+
+int function AddFlag(int parentCommand, string name, string short = "")
+    int flagsIntMap = JMap.getObj(parentCommand, "flags")
+    int flagsByName = JMap.getObj(parentCommand, "flagsByName")
+    int flagAndOptionsByText = JMap.getObj(parentCommand, "flagAndOptionsByText")
+    int flagMap = JMap.object()
+    JIntMap.setObj(flagsIntMap, flagMap, flagMap)
+    JMap.setStr(flagMap, "name", name)
+    JMap.setStr(flagMap, "short", short)
+    JMap.setObj(flagsByName, name, flagMap)
+    string textArgument = "--" + name
+    JMap.setObj(flagAndOptionsByText, textArgument, flagMap)
+    if short
+        textArgument = "-" + short
+        JMap.setObj(flagAndOptionsByText, textArgument, flagMap)
+    endIf
+    return flagMap
+endFunction
+
+function RemoveFlag(int parentCommand, int flag)
+    int flagsIntMap = JMap.getObj(parentCommand, "flags")
+    int flagsByName = JMap.getObj(parentCommand, "flagsByName")
+    int flagAndOptionsByText = JMap.getObj(parentCommand, "flagAndOptionsByText")
+    string name = JMap.getStr(flag, "name")
+    string textArgument = "--" + name
+    JMap.removeKey(flagAndOptionsByText, textArgument)
+    string short = JMap.getStr(flag, "short")
+    if short
+        textArgument = "-" + short
+        JMap.removeKey(flagAndOptionsByText, textArgument)
+    endIf
+    JMap.removeKey(flagsByName, name)
+    JIntMap.removeKey(flagsIntMap, flag)
+endFunction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Options
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Execute and Invoke Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

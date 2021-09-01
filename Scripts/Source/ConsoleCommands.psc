@@ -13,20 +13,6 @@ function Clear() global
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Simple Helpful Command Getters
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-int function Count() global ; TODO : Count(enabledOnly = false)
-    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
-    return JMap.count(api.Data_CommandNames)
-endFunction
-
-string[] function Names() global ; TODO : Names(enabledOnly = false)
-    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
-    return JMap.allKeysPArray(api.Data_CommandNames)
-endFunction
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -38,6 +24,16 @@ endFunction
 function Remove(string name) global
     ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
     api.RemoveCommand(name)
+endFunction
+
+string[] function Names() global ; TODO : Names(enabledOnly = false)
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    return JMap.allKeysPArray(api.Data_CommandNames)
+endFunction
+
+int function Count() global ; TODO : Count(enabledOnly = false)
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    return JMap.count(api.Data_CommandNames)
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,7 +76,32 @@ endFunction
 ;; Flags
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-int function AddFlag(string name, string short = "", string command = "", string subcommand = "") global
+int function AddFlag(string name, string short = "", string command = "") global
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    int id = api.GetCommandOrSubcommandByFullName(command)
+    if id
+        return api.AddFlag(id, name, short)
+    endIf
+endFunction
+
+function RemoveFlag(string name, string command = "") global
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    int id = api.GetCommandOrSubcommandByFullName(command)
+    if id
+        int flagId = api.GetFlag(id, name)
+        if flagId
+            api.RemoveFlag(id, flagId)
+        endIf
+    endIf
+endFunction
+
+string[] function FlagNames(string command) global
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    int id = api.GetCommandOrSubcommandByFullName(command)
+    if id
+        int flagsByName = JMap.getObj(id, "flagsByName")
+        return JMap.allKeysPArray(flagsByName)
+    endIf
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
