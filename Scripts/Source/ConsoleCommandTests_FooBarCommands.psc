@@ -1,0 +1,1 @@
+Scriptname ConsoleCommandTests_FooBarCommands extends Quest  
