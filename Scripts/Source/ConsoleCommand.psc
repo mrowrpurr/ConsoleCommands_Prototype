@@ -39,7 +39,7 @@ string function GetCommandName()
 endFunction
 
 function Print(string text, bool appendOutput = true)
-    ConsoleHelper.Print(text)
+    ConsoleMenu.Print(text)
     if appendOutput
         AppendOutput(text)
     endIf

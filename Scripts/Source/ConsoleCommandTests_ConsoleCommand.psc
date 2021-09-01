@@ -3,7 +3,7 @@ scriptName ConsoleCommandTests_ConsoleCommand extends ConsoleCommandsTest
 
 function Tests()
     Test("Command name is automatically detected from script name").Fn(DetectCommandNameFromScriptName())
-    Test("Command can be invoked").Fn(InvokeCommand_Basic())
+    Test("Is automatically registered and can be invoked").Fn(InvokeCommand_Basic())
 endFunction
 
 function DetectCommandNameFromScriptName()

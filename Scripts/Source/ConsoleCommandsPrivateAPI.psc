@@ -285,7 +285,7 @@ string function ExecuteCommand(string command) ; Add options for whether to add 
         return response
     else
         Log("Command not custom, invoking natively: " + command)
-        return ConsoleHelper.ExecuteCommand(command) ; TODO pass options...
+        return ConsoleMenu.ExecuteCommand(command) ; TODO pass options...
     endIf
 endFunction
 
