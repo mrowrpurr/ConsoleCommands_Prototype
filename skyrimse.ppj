@@ -20,6 +20,7 @@
     <Imports>
         <Import>@ImportsFolder\SKSE64\Scripts\Source</Import>
         <Import>@ModsFolder\ConsoleMenu\Scripts\Source</Import>
+        <Import>@ModsFolder\SkyUnit\Scripts\Source</Import>
         <!-- <Import>@ImportsFolder\Lilac\Scripts\Source</Import> -->
         <Import>@ImportsFolder\PapyrusUtil\Scripts\Source</Import>
         <!-- <Import>@ImportsFolder\UIExtensions\scripts\source</Import> -->

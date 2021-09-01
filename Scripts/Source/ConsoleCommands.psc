@@ -46,9 +46,9 @@ endFunction
 
 int function AddSubcommand(string command, string subcommand, string short = "") global
     ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
-    int commandId = api.GetCommand(command)
-    if commandId
-        int subcommandId = api.AddSubcommand(commandId, subcommand)
+    int id = api.GetCommandOrSubcommandByFullName(command)
+    if id
+        int subcommandId = api.AddSubcommand(id, subcommand)
         if short
             api.AddSubcommandAlias(subcommandId, short)
         endIf

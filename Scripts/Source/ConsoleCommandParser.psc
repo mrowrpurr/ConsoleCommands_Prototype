@@ -110,27 +110,49 @@ int function Parse(string commandText) global
     if command
         JArray.eraseIndex(argumentList, 0)
         JMap.setObj(result, "COMMAND_ID", command)
-        JMap.setStr(result, "COMMAND_NAME", commandName)
+        JMap.setStr(result, "COMMAND_NAME", JMap.getStr(command, "name"))
     else
         JArray.addFromArray(arguments, argumentList)
         return result
     endIf
 
-    string subcommandName = JArray.getStr(argumentList, 0)
-    int subcommand = api.GetSubcommand(command, subcommandName)
-    if subcommand
-        JArray.eraseIndex(argumentList, 0)
-        JMap.setObj(result, "SUBCOMMAND_ID", subcommand)
-        JMap.setStr(result, "SUBCOMMAND_NAME", subcommandName)
-    endIf
+    ; This represents the *current* command or subcommand being parsed
+    int parentCommand = command
+    int subcommand
+    string subcommandName
 
-    ; JArray.addFromArray(arguments, argumentList) ; temporary
-    int i = 0
-    string[] args = JArray.asStringArray(argumentList)
-    while i < args.Length
-        JArray.addStr(arguments, args[i])
-        i += 1
+    ; Arguments to loop thru!
+    string[] argumentArray = JArray.asStringArray(argumentList)
+    int argumentIndex = 0
+    while argumentIndex < argumentArray.Length
+        string thisArgument = argumentArray[argumentIndex]
+        MiscUtil.PrintConsole("Looking at argument: " + thisArgument + " - " + commandText)
+        ;
+
+        ; Check this argument to see if it is any of the following:
+        ; - subcommand name
+        ; - flag associated with the current parent command
+        ; - option associated with the current parent command
+        subcommand = api.GetSubcommand(parentCommand, thisArgument) ; TODO support aliases :)
+        if subcommand
+            MiscUtil.PrintConsole("This argument is a subcommand: " + thisArgument + " - " + commandText)
+            parentCommand = subcommand
+
+        ; elseIf Option
+        ; elseIf Flag
+        else
+            MiscUtil.PrintConsole("This is a regular ol' argument: " + thisArgument + " - " + commandText)
+            JArray.addStr(arguments, thisArgument)
+        endIf
+
+        ;
+        argumentIndex += 1
     endWhile
+
+    if parentCommand != command
+        JMap.setObj(result, "SUBCOMMAND_ID", parentCommand)
+        JMap.setStr(result, "SUBCOMMAND_NAME", JMap.getStr(parentCommand, "name"))
+    endIf
 
     ; Return the identifier for the parsed results
     return result
