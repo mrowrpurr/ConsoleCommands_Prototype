@@ -4,6 +4,7 @@ scriptName ConsoleCommandsTest extends SkyUnitTest hidden
 Clears all command data before every test runs.}
 
 function BeforeEach()
+    ConsoleCommandsPrivateAPI.GetInstance().DisableCommandAutoRegistration = true
     ConsoleCommands.Clear()
 endFunction
 

@@ -91,6 +91,8 @@ endFunction
 ;; Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+bool property DisableCommandAutoRegistration auto
+
 int function GetCommand(string name)
     return JMap.getObj(Data_CommandNames, name)
 endFunction
