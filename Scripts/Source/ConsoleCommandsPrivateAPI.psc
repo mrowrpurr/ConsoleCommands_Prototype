@@ -26,6 +26,9 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 int _data
+int _commandScriptRegistrationTemplateArray
+
+int property MAX_COMMAND_COUNT = 5120 autoReadonly
 
 ; Primary data structure for all command storage
 int property Data
@@ -361,13 +364,23 @@ function ResetCommandScriptArrays()
     _commandScripts37 = new ConsoleCommand[128]
     _commandScripts38 = new ConsoleCommand[128]
     _commandScripts39 = new ConsoleCommand[128]
+
+    if ! _commandScriptRegistrationTemplateArray
+        Log("Setting up Command Script Arrays template...")
+        _commandScriptRegistrationTemplateArray = JArray.object()
+        JValue.retain(_commandScriptRegistrationTemplateArray)
+        int index = 0
+        while index < MAX_COMMAND_COUNT
+            JArray.addInt(_commandScriptRegistrationTemplateArray, index)
+            index += 1
+        endWhile
+        Log("Command Script Arrays template complete.")
+    endIf
+
     int availableScriptIndices = JArray.object()
+    JArray.addFromArray(availableScriptIndices, _commandScriptRegistrationTemplateArray)
     JMap.setObj(Data, "availableScriptIndices", availableScriptIndices)
-    int index = 0
-    while index < 5120
-        JArray.addInt(availableScriptIndices, index)
-        index += 1
-    endWhile
+    
     Log("Command Script Arrays Reset.")
 endFunction
 
