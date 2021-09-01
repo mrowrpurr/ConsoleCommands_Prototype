@@ -110,8 +110,6 @@ int function Parse(string commandText) global
     int argumentIndex = 0
     while argumentIndex < argumentArray.Length
         string thisArgument = argumentArray[argumentIndex]
-        MiscUtil.PrintConsole("Looking at argument: " + thisArgument + " - " + commandText)
-        ;
 
         ; Check this argument to see if it is any of the following:
         ; - subcommand name
@@ -119,7 +117,6 @@ int function Parse(string commandText) global
         ; - option associated with the current parent command
         subcommand = api.GetSubcommand(parentCommand, thisArgument) ; TODO support aliases :)
         if subcommand
-            MiscUtil.PrintConsole("This argument is a subcommand: " + thisArgument + " - " + commandText)
             parentCommand = subcommand
         else
             int flagAndOptionsByText = JMap.getObj(parentCommand, "flagAndOptionsByText")
@@ -127,7 +124,6 @@ int function Parse(string commandText) global
             if flag
                 JMap.setObj(flags, JMap.getStr(flag, "name"), flag)
             else
-                MiscUtil.PrintConsole("This is a regular ol' argument: " + thisArgument + " - " + commandText)
                 JArray.addStr(arguments, thisArgument)
             endIf
         endIf

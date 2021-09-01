@@ -4,6 +4,8 @@ scriptName ConsoleCommandTest_InvokeViaModEvent extends ConsoleCommandsTest
 function Tests()
     Test("can invoke one command via event").Fn(OneCommand_Test())
     Test("can invoke one subcommand via event").Fn(OneSubcommand_Test())
+
+    ; TODO - Unregister!
 endFunction
 
 string _onDragonCommand

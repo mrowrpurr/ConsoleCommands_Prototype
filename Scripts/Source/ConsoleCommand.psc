@@ -23,7 +23,12 @@ string[] property Arguments
     endFunction
 endProperty
 
+function Setup()
+endFunction
+
 event OnInit()
+    Setup()
+    ConsoleCommandsPrivateAPI.GetInstance().Log("OnInit: " + self)
     if ! ConsoleCommandsPrivateAPI.GetInstance().DisableCommandAutoRegistration
         Register()
     endIf
@@ -110,4 +115,13 @@ string function GetCommandName()
             endIf
         endIf
     endIf
+endFunction
+
+function Flag(string name, string short = "")
+    ConsoleCommandsPrivateAPI api = ConsoleCommandsPrivateAPI.GetInstance()
+    api.AddFlag(_commandId, name, short)
+endFunction
+
+bool function HasFlag(string name)
+    return ConsoleCommandParser.HasFlag(_parseResult, name)
 endFunction

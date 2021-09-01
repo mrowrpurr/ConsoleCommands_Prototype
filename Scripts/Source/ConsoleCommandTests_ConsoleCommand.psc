@@ -5,6 +5,7 @@ function Tests()
     Test("Command name is automatically detected from script name").Fn(DetectCommandNameFromScriptName())
     Test("Is automatically registered and can be invoked").Fn(InvokeCommand_Basic())
     Test("Can customize the script name").Fn(CustomizeScriptName())
+    Test("Can easily setup and check for flags").Fn(CommandFlags())
 endFunction
 
 function BeforeEach()
@@ -33,4 +34,22 @@ function CustomizeScriptName()
 
     ExpectString(GetExampleCommand().GetCommandName()).To(EqualString("foo"))
     ExpectBool(GetExampleCommand().IsRegistered).To(EqualBool(false))
+endFunction
+
+function CommandFlags()
+    ExampleCommand example = GetExampleCommand()
+
+    example.Register()
+    example.Flag("silent", "s") ; Flag *after* registration
+
+    ExpectBool(example.HasFlag("silent")).To(BeFalse())
+
+    int result = ConsoleCommandParser.Parse("example -s")
+    JValue.writeToFile(result, "TheResult.json")
+    example.InvokeCommand(result)
+    ExpectBool(example.HasFlag("silent")).To(BeTrue())
+
+    result = ConsoleCommandParser.Parse("example foo")
+    example.InvokeCommand(result)
+    ExpectBool(example.HasFlag("silent")).To(BeFalse())
 endFunction

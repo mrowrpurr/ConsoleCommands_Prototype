@@ -22,11 +22,48 @@ ConsoleCommandsPrivateAPI function GetInstance() global
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Mod Installation:
+;; - Setup storage
+;; - Begin listening <--- TODO add tests to STOP listening when there are no commands with events/scripts!
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+event OnInit()
+    Log("Installing Console Commands...")
+    InitializeStorage()
+    ListenForConsoleCommands()
+    Log("Console Commands Installed.")
+endEvent
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Listen for Console Commands <--- TODO test me!
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function ListenForConsoleCommands()
+    Log("Listening for console commands...")
+    RegisterForModEvent("ConsoleCommands_OnConsoleCommand", "OnConsoleCommand")
+    ConsoleMenu.RegisterForCustomCommands("ConsoleCommands_OnConsoleCommand")
+endFunction
+
+function StopListeningForConsoleCommands() ; TODO ! With tests !
+    ConsoleMenu.UnregisterForCustomCommands("ConsoleCommands_OnConsoleCommand")
+    UnregisterForModEvent("ConsoleCommands_OnConsoleCommand")
+    Log("Stopped listening for console commands.")
+endFunction
+
+event OnConsoleCommand(string eventName, string command, float _, Form sender)
+    Log("OnConsoleCommand " + command)
+    if eventName == "ConsoleCommands_OnConsoleCommand"
+        ExecuteCommand(command)
+    endIf
+endEvent
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Primary data storage object
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 int _data
 int _commandScriptRegistrationTemplateArray
+bool _readyForRegistrations
 
 int property MAX_COMMAND_COUNT = 5120 autoReadonly
 
@@ -48,6 +85,7 @@ function InitializeStorage()
         JMap.setObj(Data, "commands", JIntMap.object())
         JMap.setObj(Data, "commandsByName", JMap.object())
         ResetCommandScriptArrays()
+        _readyForRegistrations = true
     endIf
 endFunction
 
@@ -293,25 +331,49 @@ endFunction
 
 string function InvokeCommand(int parentCommand, int parseResult)
     Log("InvokeCommand " + parentCommand)
+
     ; TODO walk up the tree
     
-    string skseEventName = JMap.getStr(parentCommand, "skseEventName")
+    string skseEventName = GetModEventForCommand(parentCommand)
     if skseEventName
         Log("SendModEvent " + skseEventName)
         string fullCommandText = ConsoleCommandParser.GetText(parseResult)
         SendModEvent(skseEventName, fullCommandText, parseResult)
     endIf
 
-    int registeredScriptSlot = JMap.getInt(parentCommand, "scriptRegistrationSlot")
-    if registeredScriptSlot
-        ConsoleCommand script = GetScript(registeredScriptSlot)
-        if script
-            Log("Invoking OnCommand for script: " + script)
-            return script.InvokeCommand(parseResult)
-        endIf
+    ConsoleCommand script = GetScriptForCommand(parentCommand)
+    if script
+        Log("Invoking OnCommand for script: " + script)
+        return script.InvokeCommand(parseResult)
     endIf
 
     return "" ; TODO return result, even from SKSE Mod Events (by reading from the console)
+endFunction
+
+string function GetModEventForCommand(int parentCommand)
+    string eventName
+    while ! eventName && parentCommand > 0
+        eventName = JMap.getStr(parentCommand, "skseEventName")
+        parentCommand = GetParent(parentCommand)
+    endWhile
+    return eventName
+endFunction
+
+ConsoleCommand function GetScriptForCommand(int parentCommand)
+    int scriptSlot
+    ConsoleCommand script
+    while ! script && parentCommand > 0
+        scriptSlot = JMap.getInt(parentCommand, "scriptRegistrationSlot")
+        if scriptSlot
+            script = GetScript(scriptSlot)
+        endIf
+        parentCommand = GetParent(parentCommand)
+    endWhile
+    return script
+endFunction
+
+int function GetParent(int command)
+    return JMap.getInt(command, "parent")
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -328,6 +390,7 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 float _scriptRegistrationLock
+bool _currentlyResettingArrays
 
 ; Console Commands currently supports a maximum of 5,120 console command scripts
 ConsoleCommand[] _commandScripts0
@@ -372,6 +435,12 @@ ConsoleCommand[] _commandScripts38
 ConsoleCommand[] _commandScripts39
 
 function ResetCommandScriptArrays()
+    if _currentlyResettingArrays
+        return
+    else
+        _currentlyResettingArrays = true
+    endIf
+
     Log("Resetting Command Script Arrays...")
     _commandScripts0 = new ConsoleCommand[128]
     _commandScripts1 = new ConsoleCommand[128]
@@ -431,6 +500,7 @@ function ResetCommandScriptArrays()
     JMap.setObj(Data, "availableScriptIndices", availableScriptIndices)
     
     Log("Command Script Arrays Reset.")
+    _currentlyResettingArrays = false
 endFunction
 
 function StoreScript(int slot, ConsoleCommand script)
@@ -606,6 +676,12 @@ ConsoleCommand function GetScript(int slot)
 endFunction
 
 function RegisterScript(int parentCommand, ConsoleCommand script, float lock = 0.0, int availableScriptIndices = 0)
+    ; Log("Registering Script... " + script)
+
+    while ! _readyForRegistrations
+        Utility.WaitMenuMode(0.2)
+    endWhile
+
     if availableScriptIndices == 0
         availableScriptIndices = JMap.getObj(Data, "availableScriptIndices")
     endIf
@@ -627,18 +703,20 @@ function RegisterScript(int parentCommand, ConsoleCommand script, float lock = 0
                 Log("No available script slots to register command " + script + " (are there 5,120 command registered? that is the maximum.)")
                 return
             endIf
-            int registrationSlot = JArray.getInt(availableScriptIndices, availableIndicesCount - 1)
+            int index = availableIndicesCount - 1
+            int registrationSlot = JArray.getInt(availableScriptIndices, index)
             if registrationSlot == 0
-                registrationSlot = JArray.getInt(availableScriptIndices, availableIndicesCount - 1)
+                registrationSlot = JArray.getInt(availableScriptIndices, index)
             endIf
             if registrationSlot == 0
                 Log("Could not get available script slot for command " + script + " (are there 5,120 command registered? that is the maximum.)")
             endIf
-            JArray.eraseIndex(availableScriptIndices, 0)
-            _scriptRegistrationLock = 0.0
+            JArray.eraseIndex(availableScriptIndices, index)
             StoreScript(registrationSlot, script)
             JMap.setInt(parentCommand, "scriptRegistrationSlot", registrationSlot)
             Log("Registered Script " + script + " in slot #" + registrationSlot)
+            ConsoleMenu.Print("[ConsoleCommands] Command Registered: " + JMap.getStr(parentCommand, "name"))
+            _scriptRegistrationLock = 0.0
         else
             RegisterScript(parentCommand, script, lock, availableScriptIndices)
         endIf
