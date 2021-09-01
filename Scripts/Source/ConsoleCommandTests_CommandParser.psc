@@ -25,7 +25,7 @@ function Tests()
 
     ; Flags
     Test("can parse command with flag").Fn(Command_WithFlag())
-    ; Test("can parse command and subcommand with flags").Fn()
+    Test("can parse command and subcommand with flags").Fn(CommandAndSubcommands_WithFlags())
 endFunction
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -231,8 +231,31 @@ function Command_WithFlag()
     ExpectBool(ConsoleCommandParser.HasFlag(result, "verbose")).To(BeFalse())
 endFunction
 
-; function CommandAndSubcommands_WithFlags()
-; endFunction
+function CommandAndSubcommands_WithFlags()
+    ConsoleCommands.Add("hello")
+    int commandVerbose = ConsoleCommands.AddFlag("verbose", "v", command = "hello")
+    ConsoleCommands.AddSubcommand("hello", "world")
+    int subcommandHi = ConsoleCommands.AddFlag("hi", "h", command = "hello world")
+    int subcommandVerbose = ConsoleCommands.AddFlag("verbose", "v", command = "hello world")
+
+    int result = ConsoleCommandParser.Parse("hello -v blah")
+    ExpectStringArray(ConsoleCommandParser.GetArguments(result)).To(HaveLength(1))
+    ExpectString(ConsoleCommandParser.GetArgument(result, 0)).To(EqualString("blah"))
+    ExpectBool(ConsoleCommandParser.HasFlag(result, "verbose")).To(BeTrue())
+    ExpectInt(ConsoleCommandParser.IdForFlag(result, "verbose")).To(EqualInt(commandVerbose))
+
+    result = ConsoleCommandParser.Parse("hello world --hi foo")
+    ExpectStringArray(ConsoleCommandParser.GetArguments(result)).To(HaveLength(1))
+    ExpectString(ConsoleCommandParser.GetArgument(result, 0)).To(EqualString("foo"))
+    ExpectBool(ConsoleCommandParser.HasFlag(result, "verbose")).To(BeFalse())
+    ExpectBool(ConsoleCommandParser.HasFlag(result, "hi")).To(BeTrue())
+    ExpectInt(ConsoleCommandParser.IdForFlag(result, "hi")).To(EqualInt(subcommandHi))
+
+    result = ConsoleCommandParser.Parse("hello world -v")
+    ExpectStringArray(ConsoleCommandParser.GetArguments(result)).To(BeEmpty())
+    ExpectBool(ConsoleCommandParser.HasFlag(result, "verbose")).To(BeTrue())
+    ExpectInt(ConsoleCommandParser.IdForFlag(result, "verbose")).To(EqualInt(subcommandVerbose))
+endFunction
 
 ; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ;; Options

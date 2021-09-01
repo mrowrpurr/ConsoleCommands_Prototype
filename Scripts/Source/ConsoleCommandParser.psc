@@ -205,3 +205,8 @@ int function IdForCommandOrSubcommand(int result) global
         return IdForCommand(result)
     endIf
 endFunction
+
+int function IdForFlag(int result, string flag) global
+    int flags = JMap.getObj(result, "FLAGS")
+    return JMap.getObj(flags, flag)
+endFunction
